@@ -1,0 +1,324 @@
+﻿@using Bug_Tracker.Models
+@using Microsoft.AspNet.Identity;
+@model DashboardViewModel
+
+@{
+    UserRoleHelper RoleHelper = new UserRoleHelper();
+}
+
+
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark" style="font-weight: bold; font-size: 350%">Your Dashboard</h1>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Info boxes -->
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="row">
+                    <div class="col">
+                        <a href=@Url.Action("Index", "Projects") style="color: black">
+                            <div class="info-box mb-3">
+                                <span class="info-box-icon bg-primary elevation-1"><i class="fas fa-edit"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Projects</span>
+                                    <span class="info-box-number">@Model.Projects.Count</span>
+                                </div>
+                                <!-- /.info-box-content -->
+                            </div>
+                        </a><!-- /.info-box -->
+                    </div>
+                    <!-- /.col -->
+                    <div class="col">
+                        <a href=@Url.Action("Index", "Tickets") style="color: black">
+                            <div class="info-box mb-3">
+                                <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-ticket-alt"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Tickets</span>
+                                    <span class="info-box-number">@Model.ActiveTicketsCount <small>Active</small></span>
+                                </div>
+                                <!-- /.info-box-content -->
+                            </div>
+                        </a>
+                        <!-- /.info-box -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- /.col -->
+            <!-- fix for small devices only -->
+            <div class="clearfix hidden-md-up"></div>
+
+            @if (Model.User.ReturnUserRole() == "Admin" || Model.User.ReturnUserRole() == "Project Manager")
+            {
+        <div class="col-lg-7">
+            <div class="row">
+                <div class="col">
+                    <a href=@Url.Action("AllUsers", "Account", new { role = "Project Manager"}) style="color:black">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-male"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text" style="font-size: large; font-weight: bold">Managers</span>
+                                <span class="info-box-number">@Model.Managers.Count()</span>
+                            </div>
+                            <!-- /.info-box-content -->
+                        </div>
+                    </a>
+                    
+                    <!-- /.info-box -->
+                </div>
+                <!-- /.col -->
+                <div class="col">
+                    <a href=@Url.Action("AllUsers", "Account", new { role = "Developer"}) style="color:black">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-laptop"></i></span>
+
+                            <div class="info-box-content">
+                                <span class="info-box-text" style="font-size: large; font-weight: bold">Developers</span>
+                                <span class="info-box-number">@Model.Developers.Count()</span>
+                            </div>
+                            <!-- /.info-box-content -->
+                        </div>
+                    </a>
+                    
+                    <!-- /.info-box -->
+                </div>
+                <!-- /.col -->
+                <div class="col">
+                    <a href=@Url.Action("AllUsers", "Account", new { role = "Submitter"}) style="color:black">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-check"></i></span>
+
+                            <div class="info-box-content">
+                                <span class="info-box-text" style="font-size: large; font-weight: bold">Submitters</span>
+                                <span class="info-box-number">@Model.Submitters.Count()</span>
+                            </div>
+                            <!-- /.info-box-content -->
+                        </div>
+                    </a>
+                    
+                    <!-- /.info-box -->
+                </div>
+            </div>
+        </div>
+                
+                <!-- /.col -->
+            }
+        </div>
+        <!-- Projects -->
+        <div class="row">
+            @foreach (var project in Model.Projects.Take(3))
+            {
+                <div class="col-lg-3 col-6">
+                    <!-- small box -->
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3>@project.Name</h3>
+                            <p>
+                                <b>@project.Tickets.Where(t => t.TicketStatus.Name.Contains("Assigned")).Count()</b> Active Tickets<br />
+                                @project.Description
+                            </p>
+                        </div>
+                        <a href=@Url.Action("Details", "Projects", new { id = project.Id }) class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+            }
+            <!-- ./col -->
+            <div class="col-lg-3 col-6">
+                <!-- small box -->
+                @if (RoleHelper.ListUserRoles(Model.User.Id).FirstOrDefault() == "Admin" || RoleHelper.ListUserRoles(Model.User.Id).FirstOrDefault() == "Project Manager")
+                {
+                    if (Model.Projects.Count() >= 3)
+                    {
+                        <div class="small-box bg-green">
+                            <div class="inner">
+                                <h3>View All</h3>
+                                <p>
+                                    <b>@Model.Projects.Count</b> Projects<br />
+                                    Click below to view all projects.
+                                </p>
+                            </div>
+                            <a href=@Url.Action("Index", "Projects") class="small-box-footer">View All <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="small-box bg-green">
+                            <div class="inner">
+                                <h3>Create New</h3>
+                                <p>
+                                    <b>@Model.Projects.Count</b> Projects<br />
+                                    Click below to create a new project.
+                                </p>
+                            </div>
+                            <a href="#" class="small-box-footer project-Modal" data-toggle="modal" data-target="#createProjectModal">Create New <i class="fas fa-plus-circle"></i></a>
+                        </div>
+                    }
+
+                }
+                else
+                {
+                    if (Model.Projects.Count() >= 3)
+                    {
+                        <div class="small-box bg-green">
+                            <div class="inner">
+                                <h3>View All</h3>
+                                <p>
+                                    <b>@Model.Projects.Count</b> Projects<br />
+                                    Click below to view all projects.
+                                </p>
+                            </div>
+                            <a href=@Url.Action("Index", "Projects") class="small-box-footer">View All <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    }
+                }
+
+            </div>
+            <!-- ./col -->
+        </div>
+        <!-- Tables -->
+        <div class="row">
+            <!-- TABLE: ALL USERS -->
+            @if (RoleHelper.ListUserRoles(User.Identity.GetUserId()).FirstOrDefault() == "Admin" || RoleHelper.ListUserRoles(User.Identity.GetUserId()).FirstOrDefault() == "Project Manager")
+            {
+                <div class="col">
+                    <div class="card collapsed-card">
+                        <a style="cursor: pointer" data-card-widget="collapse">
+                            <div class="card-header">
+                                <h3 class="card-title" style="font-weight: bold">All Users</h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="card-body">
+                            <table id="allUsersTable" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Role</th>
+                                        <th>Projects</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    @foreach (var user in Model.ApplicationUsers)
+                                    {
+                                        <tr onclick="location.href = '@Url.Action("Index", "Account", new { id = user.Id })'" style="cursor: pointer">
+                                            <td>@user.FirstName</td>
+                                            <td>@user.LastName</td>
+                                            <td>@RoleHelper.ListUserRoles(user.Id).FirstOrDefault()</td>
+                                            <td>@user.Projects.Count()</td>
+                                        </tr>
+                                    }
+
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Role</th>
+                                        <th>Projects</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="row">
+            
+            <!-- TABLE: ALL TICKETS -->
+            <div class="col">
+                <div class="card">
+                    <a style="cursor: pointer" data-card-widget="collapse">
+                        <div class="card-header">
+                            <h3 class="card-title" style="font-weight: bold">All Tickets</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                            <!--Drop downs for filtering-->
+                        </div>
+                    </a>
+                    <div class="card-body">
+                        <table id="allTicketsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Creator</th>
+                                    <th>Priority</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Updated</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ticket in Model.Tickets)
+                                {
+                                    <tr onclick="location.href = '@Url.Action("Details", "Tickets", new { id=ticket.Id })'" style="cursor: pointer">
+                                        <td>@ticket.Title</td>
+                                        <td>@ticket.OwnerUser.FullName</td>
+                                        <td>@ticket.TicketPriority.Name</td>
+                                        <td>@ticket.TicketType.Name</td>
+                                        <td>@ticket.TicketStatus.Name</td>
+                                        @if (ticket.Updated != null)
+                                        {
+                                            <td>@ticket.Updated</td>
+                                        }
+                                        else
+                                        {
+                                            <td>N/A</td>
+                                        }
+                                        <td>@ticket.Created</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Creator</th>
+                                    <th>Priority</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Updated</th>
+                                    <th>Created</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#allTicketsTable").DataTable({
+                        "order": [[ 6, "desc" ]]
+                    });
+            $('#allUsersTable').DataTable({
+                "order": [[2, "asc"]]
+                    });
+        });
+    </script>
+}

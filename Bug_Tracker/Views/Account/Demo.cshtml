@@ -1,0 +1,200 @@
+﻿@using Bug_Tracker.Models
+@model LoginViewModel
+@{
+    Layout = null;
+}
+    <link rel="shortcut icon" type="image/png" href="/favicon.png" />
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Bug Tracker | Login</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Font Awesome -->
+    <link href="~/Content/fontawesome-free/css/all.min.css" rel="stylesheet" />
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- icheck bootstrap -->
+    <link href="~/Content/icheck-bootstrap/icheck-bootstrap.min.css" rel="stylesheet" />
+    <!-- Theme style -->
+    <link href="~/Content/dist/css/adminlte.css" rel="stylesheet" />
+    <!-- Google Font: Source Sans Pro -->
+    <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+</head>
+<body class="hold-transition login-page">
+    <div class="login-box" style="width: 400px">
+        <div class="login-logo">
+            <img src="/Uploads/B_T_Logo.png" width="340px"/>
+        </div>
+        <!-- /.login-logo -->
+        <div class="card">
+            <div class="card-body login-card-body">
+                <p class="login-box-msg">Select a user to start your session</p>
+
+                <div class="row">
+                    <div class="col">
+                        @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "form-horizontal", role = "form", @id = "demoAdminSignInForm" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(model => model.Email, new { @id = "demoAdminEmail"})
+                            @Html.HiddenFor(model => model.Password, new { @id = "demoAdminPassword"})
+                            <a style="color:black; cursor: pointer" id="demoAdminSignIn">
+                                <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                    <span class="info-box-icon bg-red elevation-1"><i class="fas fa-user-tie"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text" style="font-size: large; font-weight: bold">Admin</span>
+                                        <span class="info-box-text">Control over everything</span>
+                                    </div>
+                                    <!-- /.info-box-content -->
+                                </div>
+                            </a>
+                        }
+                    </div>
+                    <div class="col">
+                        @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "form-horizontal", role = "form", @id = "demoManagerSignInForm" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(model => model.Email, new { @id = "demoManagerEmail" })
+                            @Html.HiddenFor(model => model.Password, new { @id = "demoManagerPassword" })
+                        <a style="color:black; cursor: pointer" id="demoManagerSignIn">
+                            <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                <span class="info-box-icon bg-green elevation-1"><i class="fas fa-male"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Manager</span>
+                                    <span class="info-box-text">Manages projects and users</span>
+                                </div>
+                                <!-- /.info-box-content -->
+                            </div>
+                        </a>
+                        }
+                    </div>
+                    <div class="col">
+                        @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "form-horizontal", role = "form", @id = "demoDeveloperSignInForm" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(model => model.Email, new { @id = "demoDeveloperEmail" })
+                            @Html.HiddenFor(model => model.Password, new { @id = "demoDeveloperPassword" })
+                        <a style="color:black; cursor: pointer" id="demoDeveloperSignIn">
+                            <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                <span class="info-box-icon bg-cyan elevation-1"><i class="fas fa-laptop"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Developer</span>
+                                    <span class="info-box-text">Manages assigned tickets</span>
+                                </div>
+                                <!-- /.info-box-content -->
+                            </div>
+                        </a>
+                        }
+                    </div>
+                    <div class="col">
+                        @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "form-horizontal", role = "form", @id = "demoSubmitterSignInForm" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(model => model.Email, new { @id = "demoSubmitterEmail" })
+                            @Html.HiddenFor(model => model.Password, new { @id = "demoSubmitterPassword" })
+                        <a style="color:black; cursor: pointer" id="demoSubmitterSignIn">
+                            <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                <span class="info-box-icon bg-yellow elevation-1"><i class="fas fa-check"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Submitter</span>
+                                    <span class="info-box-text">Creates new tickets</span>
+                                </div>
+                            </div>
+                        </a>
+                        }
+                    </div>
+                    </div>
+
+                <!--<div class="social-auth-links text-center mb-3">
+                  <p>- OR -</p>
+                  <a href="#" class="btn btn-block btn-primary">
+                    <i class="fab fa-facebook mr-2"></i> Sign in using Facebook
+                  </a>
+                  <a href="#" class="btn btn-block btn-danger">
+                    <i class="fab fa-google-plus mr-2"></i> Sign in using Google+
+                  </a>
+                </div>-->
+                <!-- /.social-auth-links -->
+
+
+                <p class="mb-1">
+                    @Html.ActionLink("I already have an account", "Login", "Account", new { @class = "text-center" })
+                </p>
+                <p class="mb-0">
+                    @Html.ActionLink("Register a new account", "Register", "Account", new { @class = "text-center" })
+                </p>
+
+            </div>
+            <!-- /.login-card-body -->
+        </div>
+    </div>
+    <!-- /.login-box -->
+    <!-- jQuery -->
+    <script src="../../Scripts/jquery/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="../../Scripts/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="../../Scripts/dist/js/adminlte.min.js"></script>
+    <!-- jQuery -->
+    <script src="~/Scripts/jquery/jquery.min.js"></script>
+    <!-- jQuery UI 1.11.4 -->
+    <script src="~/Scripts/jquery-ui/jquery-ui.min.js"></script>
+    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+    <script>$.widget.bridge('uibutton', $.ui.button)</script>
+    <!-- Bootstrap 4 -->
+    <script src="~/Scripts/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- ChartJS -->
+    <script src="~/Scripts/chart.js/Chart.min.js"></script>
+    <!-- Sparkline -->
+    <script src="~/Scripts/sparklines/sparkline.js"></script>
+    <!-- JQVMap -->
+    <script src="~/Scripts/jqvmap/jquery.vmap.min.js"></script>
+    <script src="~/Scripts/jqvmap/maps/jquery.vmap.usa.js"></script>
+    <!-- jQuery Knob Chart -->
+    <script src="~/Scripts/jquery-knob/jquery.knob.min.js"></script>
+    <!-- daterangepicker -->
+    <script src="~/Scripts/moment/moment.min.js"></script>
+    <script src="~/Scripts/daterangepicker/daterangepicker.js"></script>
+    <!-- Tempusdominus Bootstrap 4 -->
+    <script src="~/Scripts/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+    <!-- Summernote -->
+    <script src="~/Scripts/summernote/summernote-bs4.min.js"></script>
+    <!-- overlayScrollbars -->
+    <script src="~/Scripts/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
+    <!-- AdminLTE App -->
+
+
+    <script src="~/Scripts/dist/js/adminlte.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+            $("#demoAdminSignIn").on("click", function () {
+                $("#demoAdminEmail").val("DemoAdmin@mailinator.com")
+                $("#demoAdminPassword").val("SparklePuppy123!!")
+                $("#demoAdminSignInForm").submit();
+            })
+            $("#demoManagerSignIn").on("click", function () {
+                $("#demoManagerEmail").val("DemoManager@mailinator.com")
+                $("#demoManagerPassword").val("SparklePuppy123!!")
+                $("#demoManagerSignInForm").submit();
+            })
+            $("#demoDeveloperSignIn").on("click", function () {
+                $("#demoDeveloperEmail").val("DemoDeveloper@mailinator.com")
+                $("#demoDeveloperPassword").val("SparklePuppy123!!")
+                $("#demoDeveloperSignInForm").submit();
+            })
+            $("#demoSubmitterSignIn").on("click", function () {
+                $("#demoSubmitterEmail").val("DemoSubmitter@mailinator.com")
+                $("#demoSubmitterPassword").val("SparklePuppy123!!")
+                $("#demoSubmitterSignInForm").submit();
+            })
+        })
+
+    </script>
+
+</body>
+</html>

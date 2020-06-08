@@ -1,0 +1,98 @@
+﻿@using Bug_Tracker.Models
+@model TicketDetailsViewModel  
+    <div class="card-body">
+        <p>@Model.Ticket.Description</p>
+        @if (Model.Ticket.TicketComments.Count() == 1)
+        {
+            <span class="float-right text-muted">@Model.Ticket.TicketComments.Count() comment</span>
+        }
+        else
+        {
+            <span class="float-right text-muted">@Model.Ticket.TicketComments.Count() comments</span>
+        }
+
+    </div>    
+<div class="card-footer card-comments">
+
+        @{ 
+            var loop = 0;
+        }
+
+        @foreach (var comment in Model.Ticket.TicketComments.OrderBy(t => t.Created))
+        {
+            var deleteModalId = "#deleteCommentModal" + loop;
+            var editModalId = "#editCommentModal" + loop;
+            <div class="card-comment">
+                <!-- User image -->
+                <img class="img-circle img-sm" src=@Model.User.AvatarPath>
+                <div class="comment-text">
+                    <span class="username">
+                        @comment.User.FullName
+                        <span class="text-muted float-right">@comment.Created.ToString("MM/dd HH:mm tt")</span>
+                    </span><!-- /.username -->
+                    @if (Model.User.Id == comment.User.Id)
+                    {
+                        <div>
+                            <button class="float-right btn btn-danger" data-target=@deleteModalId data-toggle="modal" style="margin-left: 15px">Delete</button>
+                            <button class="float-right btn btn-warning" data-target=@editModalId data-toggle="modal">Edit</button>
+                        </div>
+                    }
+                    @comment.CommentBody
+                </div>
+
+                <!-- /.comment-text -->
+            </div>
+            var deleteModal = "deleteCommentModal" + loop;
+            var editModal = "editCommentModal" + loop;
+            var textareaId = "textareaCommentId" + loop;
+            <div class="modal fade" id=@deleteModal>
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+
+                        <!-- Modal Header -->
+                        <div class="modal-header">
+                            <div style="text-align: center" class="col">
+                                <h3 class="modal-title" style="font-weight: bold">Are you sure?</h3>
+                            </div>
+                        </div>
+                        <!-- Modal footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal" style="width: 100%">No</button>
+                            <button type="button" class="btn btn-success" data-dismiss="modal" style="width: 100%" onclick="deleteComment(@comment.Id)">Yes</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id=@editModal>
+                <div class="modal-dialog" style="width: 25%">
+                    <div class="modal-content">
+
+                        <!-- Modal Header -->
+                        <div class="modal-header">
+                            <div style="text-align: center" class="col">
+                                <h3 class="modal-title" style="font-weight: bold">Edit Comment</h3>
+                            </div>
+                        </div>
+                        <div class="modal-body">
+                            <textarea style="width: 100%" rows="4" id=@textareaId>@comment.CommentBody</textarea>
+                        </div>
+                        <!-- Modal footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal" style="width: 100%">Cancel</button>
+                            <button type="button" class="btn btn-success" data-dismiss="modal" style="width: 100%" onclick="editComment(@comment.Id, $('#@textareaId').val())">Save</button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            loop++;
+        }
+
+    </div>
+
+
+    
+
+

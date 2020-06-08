@@ -1,0 +1,107 @@
+﻿@using Bug_Tracker.Models
+@model AllUsersViewModel
+
+@{ 
+    UserRoleHelper RoleHelper = new UserRoleHelper();
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark" style="font-weight: bold; font-size: 300%">@Model.Header</h1>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+
+
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title" style="font-weight: bold">All Users</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <table id="allUsersTable" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Role</th>
+                            @if (Model.Role != "Admin")
+                            {
+                                if (Model.Role != "All")
+                                {
+                                    <th>@Model.SpecialPropertyHeader</th>
+                                }
+                            }
+
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        @foreach (var user in Model.Users)
+                        {
+                        <tr onclick="location.href = '@Url.Action("Index", "Account", new { id = user.Id })'" style="cursor: pointer">
+                            <td>@user.FirstName</td>
+                            <td>@user.LastName</td>
+                            <td>@user.ReturnUserRole()</td>
+                            @if (Model.Role != "All")
+                            {
+                                if (user.ReturnUserRole() != "Admin")
+                                {
+                                    if (user.ReturnUserRole() == "Project Manager")
+                                    {
+                                        <td>@user.Projects.Count()</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@user.ReturnNumberOfTickets()</td>
+                                    }
+                                }
+                            }
+
+                        </tr>
+                        }
+
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Role</th>
+                            @if (Model.Role != "Admin")
+                            {
+                                if (Model.Role != "All")
+                                {
+                                    <th>@Model.Header</th>
+                                }
+                            }
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- The Modal -->
+
+</section>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#allUsersTable").DataTable({
+                "order": [[2, "asc"]]
+            });
+        });
+    </script>
+}

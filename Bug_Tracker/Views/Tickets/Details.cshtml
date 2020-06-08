@@ -1,0 +1,825 @@
+﻿@using Bug_Tracker.Models
+@using System.Web.Configuration
+@model TicketDetailsViewModel
+
+@{
+    UserRoleHelper RoleHelper = new UserRoleHelper();
+    ProjectsHelper ProjectHelper = new ProjectsHelper();
+    TicketHelper TicketHelper = new TicketHelper();
+    ApplicationDbContext db = new ApplicationDbContext();
+}
+
+<style>
+</style>
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark" style="font-weight: bold; font-size: 300%">@Model.Ticket.Title</h1>
+                
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-3">
+                <div>
+                    <div class="accordion" id="ticketAccordion">
+
+
+                        @if (Model.UserRole == "Admin" || Model.UserRole == "Project Manager")
+                        {
+                            if (Model.Ticket.AssignedToUser != null)
+                            {
+                                <a style="color: black" href="#" data-toggle="modal" data-target="#assignDeveloperModal">
+                                    <div class="info-box mb-3 bg-green">
+                                        <span class="info-box-icon bg-white elevation-1"><i class="fas fa-laptop" style="color: #208637"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Assigned Developer:</span>
+                                            <span class="info-box-text">@Model.Ticket.AssignedToUser.FullName</span>
+                                        </div>
+                                        <i class="fas fa-plus-circle float-right"></i>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+                            }
+                            else
+                            {
+                                <a style="color: black" href="#" data-toggle="modal" data-target="#assignDeveloperModal">
+                                    <div class="info-box mb-3">
+                                        <span class="info-box-icon bg-red elevation-1"><i class="fas fa-exclamation"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Assign Developer:</span>
+                                            <span class="info-box-text">Click to assign a developer</span>
+                                        </div>
+                                        <i class="fas fa-plus-circle float-right"></i>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+
+                            }
+                            <div id="statusHeader" class="info-box mb-3" style="cursor: pointer" data-target="#statusCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="statusCollapse">
+                                <span id="statusBgSpan" class="info-box-icon elevation-1 bg-gray"><i id="statusIcon" class="iStatusClass"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Status:</span>
+                                    <span id="statusSpan" class="info-box-text"></span>
+                                </div>
+                                <i class="fas fa-chevron-down float-right"></i>
+                                <!-- /.info-box-content -->
+                            </div>
+                            <div id="statusCollapse" class="collapse" aria-labelledby="headingOne"
+                                 data-parent="#ticketAccordion">
+                                <div style="padding-left: 20%">
+                                    <a class="aStatusClass" onclick="editTicketStatus(@Model.TicketStatuses.FirstOrDefault(t => t.Name == "Resolved").Id)" style="color:black; cursor:pointer">
+                                        <div id="headingOne" class="info-box mb-3" style="cursor: pointer" data-target="#statusCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                            <span class="info-box-icon bg-green elevation-1"><i class="fas fa-check-double iStatusClass"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text" style="font-size: large; font-weight: bold">Resolved</span>
+                                            </div>
+                                            <!-- /.info-box-content -->
+                                        </div>
+                                    </a>
+                                </div>
+                                <div style="padding-left: 20%">
+                                    <a class="aStatusClass" onclick="editTicketStatus(@Model.TicketStatuses.FirstOrDefault(t => t.Name == "Assigned").Id)" style="color:black; cursor:pointer">
+                                        <div id="headingOne" class="info-box mb-3" style="cursor: pointer" data-target="#statusCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                            <span class="info-box-icon bg-yellow elevation-1"><i class="fas fa-check iStatusClass"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text" style="font-size: large; font-weight: bold">Assigned</span>
+                                            </div>
+                                            <!-- /.info-box-content -->
+                                        </div>
+                                    </a>
+                                </div>
+                                <div style="padding-left: 20%">
+                                    <a class="aStatusClass" onclick="editTicketStatus(@Model.TicketStatuses.FirstOrDefault(t => t.Name == "Unassigned").Id)" style="color:black; cursor:pointer">
+                                        <div id="headingOne" class="info-box mb-3" style="cursor: pointer" data-target="#statusCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                            <span class="info-box-icon bg-red elevation-1"><i class="fas fa-exclamation-triangle iStatusClass"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text" style="font-size: large; font-weight: bold">Unassigned</span>
+                                            </div>
+                                            <!-- /.info-box-content -->
+                                        </div>
+                                    </a>
+                                </div>
+                                <div style="padding-left: 20%">
+                                    <a class="aStatusClass" onclick="editTicketStatus(@Model.TicketStatuses.FirstOrDefault(t => t.Name == "Archived").Id)" style="color:black; cursor:pointer">
+                                        <div id="headingOne" class="info-box mb-3" style="cursor: pointer" data-target="#statusCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                            <span class="info-box-icon bg-gray elevation-1"><i class="fas fa-archive iStatusClass"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text" style="font-size: large; font-weight: bold">Archived</span>
+                                            </div>
+                                            <!-- /.info-box-content -->
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        }
+
+
+                        <div id="priorityHeader" class="info-box mb-3" style="cursor: pointer" data-target="#priorityCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="priorityCollapse">
+                            <span id="priorityBgSpan" class="info-box-icon elevation-1 bg-gray"><i class="iTypeClass" id="priorityIcon"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text" style="font-size: large; font-weight: bold">Priority:</span>
+                                <span id="prioritySpan" class="info-box-text"></span>
+                            </div>
+                            <i class="fas fa-chevron-down float-right"></i>
+                            <!-- /.info-box-content -->
+                        </div>
+                        <div id="priorityCollapse" class="collapse" aria-labelledby="headingTwo"
+                             data-parent="#ticketAccordion">
+                            <div style="padding-left: 20%">
+                                <a class="aPriorityClass" onclick="editTicketPriority(@Model.TicketPriorities.FirstOrDefault(p => p.Name == "Low").Id)" style="color:black; cursor:pointer">
+                                    <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#priorityCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                        <span class="info-box-icon bg-yellow elevation-1"><i class="fas fa-angle-up iPriorityClass"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Low</span>
+                                        </div>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+                            </div>
+                            <div style="padding-left: 20%">
+                                <a class="aPriorityClass" onclick="editTicketPriority(@Model.TicketPriorities.FirstOrDefault(p => p.Name == "Medium").Id)" style="color:black; cursor:pointer">
+                                    <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#priorityCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                        <span class="info-box-icon bg-orange elevation-1"><i class="fas fa-angle-double-up iPriorityClass"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Medium</span>
+                                        </div>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+                            </div>
+                            <div style="padding-left: 20%">
+                                <a class="aPriorityClass" onclick="editTicketPriority(@Model.TicketPriorities.FirstOrDefault(p => p.Name == "High").Id)" style="color:black; cursor:pointer">
+                                    <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#priorityCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                        <span class="info-box-icon bg-red elevation-1"><i class="fas fa-exclamation-triangle iPriorityClass"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">High</span>
+                                        </div>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        <div id="typeHeader" class="info-box mb-3" style="cursor: pointer" data-target="#typeCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="typeCollapse">
+                            <span id="typeBgSpan" class="info-box-icon elevation-1 bg-gray"><i id="typeIcon" class=""></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text" style="font-size: large; font-weight: bold">Type:</span>
+                                <span id="typeSpan" class="info-box-text"></span>
+                            </div>
+                            <i class="fas fa-chevron-down float-right"></i>
+                            <!-- /.info-box-content -->
+                        </div>
+                        <div id="typeCollapse" class="collapse" aria-labelledby="headingThree"
+                             data-parent="#ticketAccordion">
+                            <div style="padding-left: 20%">
+                                <a class="aTypeClass" onclick="editTicketType(@Model.TicketTypes.FirstOrDefault(p => p.Name == "Feature Request").Id)" style="color:black; cursor:pointer">
+                                    <div id="headingThree" class="info-box mb-3" style="cursor: pointer" data-target="#typeCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                        <span class="info-box-icon bg-green elevation-1"><i class="fas fa-hand-paper iTypeClass"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Feature Request</span>
+                                        </div>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+                            </div>
+                            <div style="padding-left: 20%">
+                                <a class="aTypeClass" onclick="editTicketType(@Model.TicketTypes.FirstOrDefault(p => p.Name == "UI").Id)" style="color:black; cursor:pointer">
+                                    <div id="headingThree" class="info-box mb-3" style="cursor: pointer" data-target="#typeCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="typeCollapse">
+                                        <span class="info-box-icon bg-yellow elevation-1"><i class="fas fa-mouse-pointer iTypeClass"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">UI</span>
+                                        </div>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+                            </div>
+                            <div style="padding-left: 20%">
+                                <a class="aTypeClass" onclick="editTicketType(@Model.TicketTypes.FirstOrDefault(p => p.Name == "Server").Id)" style="color:black; cursor:pointer">
+                                    <div id="headingThree" class="info-box mb-3" style="cursor: pointer" data-target="#typeCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                        <span class="info-box-icon bg-orange elevation-1"><i class="fas fa-server iTypeClass"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Server</span>
+                                        </div>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+                            </div>
+                            <div style="padding-left: 20%">
+                                <a class="aTypeClass" onclick="editTicketType(@Model.TicketTypes.FirstOrDefault(p => p.Name == "Defect").Id)" style="color:black; cursor:pointer">
+                                    <div id="headingThree" class="info-box mb-3" style="cursor: pointer" data-target="#typeCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                        <span class="info-box-icon bg-red elevation-1"><i class="fas fa-exclamation-triangle iTypeClass"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Defect</span>
+                                        </div>
+                                        <!-- /.info-box-content -->
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="padding-top: 10%">
+                    <div class="col">
+                        <a href="#" data-target="#uploadAttachmentModal" data-toggle="modal">
+                            <div class="info-box mb-3 bg-yellow">
+                                <i class="fas fa-arrow-circle-up fa-2x" style="display: flex;justify-content: center;align-items: center;padding-left: 5%"></i>
+                                <div class="info-box-content">
+                                    <span class="info-box-number" style="text-align: center; padding-right: 10%">Upload<br />Attachments</span>
+                                </div>
+                                <!-- /.info-box-content -->
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <a data-target="#downloadAttachmentsModal" data-toggle="modal" style="cursor: pointer">
+                            <div class="info-box mb-3 bg-green">
+                                <i class="fas fa-arrow-circle-down fa-2x" style="display: flex;justify-content: center;align-items: center;padding-left: 5%"></i>
+                                <div class="info-box-content">
+                                    <span class="info-box-number" style="text-align: center">Download<br />Attachments</span>
+                                </div>
+                                <h1 style="font-weight:bold; display: flex;justify-content: center;align-items: center;padding-right: 5%">@Model.Ticket.TicketAttachments.Count()</h1>
+                                <!-- /.info-box-content -->
+                            </div>
+                        </a>
+
+                    </div>
+                </div>
+                <div>
+                    <a style="cursor: pointer; color: black" data-toggle="modal" data-target="#editTicketAndAttachmentsModel">
+                        <div class="info-box mb-3 bg-red">
+                            <span class="info-box-icon bg-white elevation-1"><i class="fas fa-edit" style="color: #c62232"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text" style="font-size: medium; font-weight: bold">Edit Ticket or Attachments:</span>
+                                <span class="info-box-text">Click here to start.</span>
+                            </div>
+                            <!-- /.info-box-content -->
+                        </div>
+                    </a>
+
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card card-widget">
+                    <div class="card-header">
+                        <div class="user-block">
+                            <img class="img-circle" src=@Model.User.AvatarPath>
+                            <span class="username"><a href="#">@Model.Ticket.OwnerUser.FullName</a></span>
+                            <span class="description">@Model.Ticket.Created.ToString("MM/dd/yyyy h:mm tt")</span>
+                        </div>
+                        <!-- /.user-block -->
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                        <!-- /.card-tools -->
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- /.card-body -->
+                    <!--LOAD COMMENTS PARTIAL VIEw-->
+                    <div id="ticketCommentsDiv">
+                        @Html.Partial("_TicketComments", Model)
+                    </div>
+                    <!-- /.card-footer -->
+                    <div class="card-footer">
+
+                        <!-- .img-push is used to add margin to elements next to floating images -->
+                        @Html.AntiForgeryToken()
+                        @Html.Hidden("ticketId", Model.Ticket.Id, new { @id = "ticketIdForComment" })
+                        @Html.Hidden("userId", Model.User.Id, new { @id = "userIdForComment" })
+                        <img class="img-fluid img-circle img-sm" src=@Model.User.AvatarPath>
+                        <div class="img-push">
+                            @*<input type="text" class="form-control form-control-sm" placeholder="Press enter to post comment">*@
+                            @Html.TextBox("commentBody", null, new { @type = "text", @class = "form-control form-control-sm", @placeholder = "Press enter to post a comment", @id = "commentId" })
+                        </div>
+                    </div>
+                    <!-- /.card-footer -->
+                </div>
+                <!--RENDER PARTIAL-->
+                <div id="ticketHistories">
+                    @Html.Partial("_TicketHistories")
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <!-- The Modal -->
+    <div class="modal fade" id="assignDeveloperModal">
+        <div class="modal-dialog ">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" style="font-weight: bold">Select Developer</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <table id="usersTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Tickets assigned to</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model.Developers)
+                            {
+                                <tr onclick="location.href = '@Url.Action("AssignDeveloperToTicket", "Tickets", new { ticketId = Model.Ticket.Id, userId = user.Id })'" style="cursor: pointer">
+                                    <td>@user.FirstName</td>
+                                    <td>@user.LastName</td>
+                                    <td>@db.Tickets.Where(t => t.AssignedToUserId == user.Id).Count()</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Tickets assigned to</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div id="uploadAttachmentModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" style="font-weight: bold">Upload a File</h3>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                @using (Html.BeginForm("CreateAttachment", "Tickets", FormMethod.Post, new { enctype = "Multipart/form-data" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.Hidden("ticketId", Model.Ticket.Id)
+                    <div class="modal-body">
+                        <div class="row" style="text-align: center">
+                            <div class="col">
+                                <h1 id="descriptionHeader" style="text-align: center; font-weight: bold">Description</h1>
+                            </div>
+                        </div>
+                        <div class="row" style="text-align: center">
+                            <div class="col">
+                                <input type="text" style="width: 75%; text-align: center" name="description" />
+                            </div>
+                        </div>
+                        <div class="row" style="padding-top: 5%; text-align: center">
+                            <div class="col" style="display:inline-block">
+                                <input hidden class="fileInput" type="file" name="file" id="fileInput" accept=@WebConfigurationManager.AppSettings["AllowedAttachmentExtensions"] />
+                                <a href="#" id="showFileInput">
+                                    <div class="small-box bg-blue" style="width: 75%;text-align: center; display:inline-block">
+                                        <i class="fas fa-arrow-circle-up fa-4x" style="text-align: center; padding-top: 10%"></i>
+                                        <h2 style="text-align: center; font-weight: bold">Select File</h2>
+                                        <h6 id="fileName" style="padding-bottom: 5%"></h6>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Submit</button>
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="editTicketAndAttachmentsModel">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h2 class="modal-title" style="font-weight: bold">Edit Ticket or Attachments</h2>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="card-body">
+                        @Html.Hidden("ticketId", Model.Ticket.Id, new { id = "hiddenTicketId" })
+                        <h3 style="font-weight: bold">Title</h3>
+                        @Html.TextBox("ticketTitle", Model.Ticket.Title, new { id = "editTicketTitleId", type = "text", style = "width: 50%" })
+                        <h4 style="font-weight: bold; padding-top: 2%">Summary</h4>
+                        @Html.TextArea("ticketDescription", Model.Ticket.Description, new { id = "editTicketDescriptionId", rows = "6", style = "width: 100%" })
+                        @if (Model.Ticket.TicketAttachments.Count() > 0)
+                        {
+                            <h3 style="font-weight: bold; padding-top: 20px">Attachments</h3>
+                            <div class="row">
+                                @{
+                                    var loop = 0;
+                                }
+                                @foreach (var attachment in Model.Ticket.TicketAttachments)
+                                {
+                                    var id = "attachmentDescriptionId" + loop;
+                                    <div class="col-4">
+                                        <h6 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold">@attachment.FileName</h6>
+                                        <textarea rows="4" style="width: 100%" id=@id>@attachment.Description</textarea>
+                                        <a class="btn btn-danger" style="width: 100%; color: white" href=@Url.Action("DeleteAttachment", "Tickets", new { id = attachment.Id})>
+                                            Delete
+                                        </a>
+                                    </div>
+                                    loop++;
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <h3 style="font-weight: bold">No Attachments</h3>
+                        }
+
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" data-dismiss="modal" onclick="editTicketAndAttachments()">Save</button>
+
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="downloadAttachmentsModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h2 class="modal-title" style="font-weight: bold">Download Attachments</h2>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="card-body">
+                        @if (Model.Ticket.TicketAttachments.Count() > 0)
+                        {
+                            <div class="row">
+                                @foreach (var attachment in Model.Ticket.TicketAttachments)
+                                {
+                                    <div class="col-4">
+                                        <div class="row">
+                                            <h6 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; padding-left: 10px">@attachment.FileName</h6>
+                                        </div>
+                                        <div class="row">
+                                            <span style="padding: 10px">@attachment.Description</span>
+                                        </div>
+                                        <div class="row" style="padding: 20px">
+                                            <a class="btn btn-success" style="width: 97%; color: white; position: absolute;bottom: 0;left: 0;right: 0;margin: auto; cursor: pointer" href=@Url.Action("DownloadFile", "Tickets", new { filepath = attachment.FilePath})>
+                                                Download
+                                            </a>
+                                        </div>
+                                    </div>
+
+
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <h3 style="font-weight: bold">No Attachments</h3>
+                        }
+
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    
+
+</section>
+
+@section scripts {
+
+
+    <script>
+
+        var attachmentDescriptions = new Array()
+
+        $(document).ready(function () {
+            loadTicketData()
+            $("#showFileInput").on('click', function(e){
+                e.preventDefault();
+                $("#fileInput").trigger('click');
+            });
+
+            $(".fileInput").change(function () {
+                var value = this.value.toString().split("\\")[2]
+                $("#fileName").text(value)
+            });
+            $("#ticketHistoriesTable").DataTable({
+                        "order": [[ 4, "desc" ]]
+            });
+        });
+
+        document.getElementById('commentId').addEventListener('keypress', function (event) {
+            if (event.keyCode == 13) {
+                var commentBody = this.value;
+                var ticketId = $("#ticketIdForComment").val()
+                var userId = $("#userIdForComment").val()
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("CreateComment", "Tickets")",
+                    data: {
+                        "ticketId": ticketId,
+                        "userId": userId,
+                        "commentBody": commentBody
+                    },
+                    success: function (partialViewResult) {
+                        $("#ticketCommentsDiv").html(partialViewResult);
+                        $("#commentId").val("")
+                    }
+                });
+            }
+        });
+
+        $("#selectYes").on("click", function () {
+            $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("CreateComment", "Tickets")",
+                    data: {
+                        "ticketId": ticketId,
+                        "userId": userId,
+                        "commentBody": commentBody
+                    },
+                    success: function (partialViewResult) {
+                        $("#ticketCommentsDiv").html(partialViewResult);
+                        $("#commentId").val("")
+                    }
+                });
+        })
+
+        function editTicketStatus(statusId) {
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("EditStatus", "Tickets")",
+                data: {
+                        "id": @Model.Ticket.Id,
+                        "statusId": statusId
+                },
+                success: function (partialViewResult) {
+                    $("#ticketHistories").html(partialViewResult);
+                    $("#ticketHistoriesTable").DataTable({
+                        "order": [[ 4, "desc" ]]
+                    });
+                }
+
+            });
+        }
+
+        function editTicketPriority(priorityId) {
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("EditPriority", "Tickets")",
+                data: {
+                        "id": @Model.Ticket.Id,
+                        "priorityId": priorityId
+                },
+                success: function (partialViewResult) {
+                    $("#ticketHistories").html(partialViewResult);
+                    $("#ticketHistoriesTable").DataTable({
+                        "order": [[ 4, "desc" ]]
+                    });
+                }
+                });
+        }
+
+        function editTicketType(typeId) {
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("EditType", "Tickets")",
+                data: {
+                        "id": @Model.Ticket.Id,
+                        "typeId": typeId
+                },
+                success: function (partialViewResult) {
+                    $("#ticketHistories").html(partialViewResult);
+                    $("#ticketHistoriesTable").DataTable({
+                        "order": [[ 4, "desc" ]]
+                    });
+                }
+            });
+        }
+
+
+        function editTicketAndAttachments() {
+            
+            var ticketId = $("#ticketId").val()
+            var ticketTitle = $("#editTicketTitleId").val()
+            var ticketDescription = $("#editTicketDescriptionId").val()
+            for (var i = 0; i < @Model.Ticket.TicketAttachments.Count(); i++) {
+                var description = $("#attachmentDescriptionId" + i).val()
+                attachmentDescriptions.push(description)
+            }
+            console.log(attachmentDescriptions)
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditTicketAndAttachments", "Tickets")",
+                data: {
+                    "ticketId": ticketId,
+                    "ticketTitle": ticketTitle,
+                    "ticketDescription": ticketDescription,
+                    "attachmentDescriptions": attachmentDescriptions
+                },
+                success: function () {
+                    location.reload()
+                }
+            });
+        }
+
+        function editComment(id, body) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditComment", "Tickets")",
+                data: {
+                    "id": id,
+                    "commentBody": body
+                },
+                success: function (partialViewResult) {
+                    $("#ticketCommentsDiv").html(partialViewResult);
+                }
+            });
+        }
+        
+        function deleteComment(id) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteComment", "Tickets")",
+                data: {
+                    "id": id
+                },
+                success: function (partialViewResult) {
+                    $("#ticketCommentsDiv").html(partialViewResult);
+                }
+            });
+        }
+
+        function loadTicketData() {
+            var status = "@Model.Ticket.TicketStatus.Name";
+            var statusIcon = ""
+            var statusBg = ""
+
+            if (status == "Resolved") {
+                statusIcon = "fas fa-check-double"
+                statusBg = "info-box-icon elevation-1 bg-green"
+            } else if (status == "Assigned") {
+                statusIcon = "fas fa-check"
+                statusBg = "info-box-icon elevation-1 bg-yellow"
+            } else if (status == "Unassigned") {
+                statusIcon = "fas fa-exclamation-triangle"
+                statusBg = "info-box-icon elevation-1 bg-red"
+            } else if (status == "Archived") {
+                statusIcon = "fas fa-archive"
+                statusBg = "info-box-icon elevation-1 bg-gray"
+            }
+
+            $("#statusBgSpan").removeClass();
+            $("#statusIcon").removeClass();
+            $("#statusSpan").text("");
+
+            $("#statusBgSpan").addClass(statusBg);
+            $("#statusIcon").addClass(statusIcon);
+            $("#statusSpan").text(status);
+
+
+
+            var priority = "@Model.Ticket.TicketPriority.Name";
+            var priotityIcon = ""
+            var priorityBg = ""
+
+            if (priority == "Low") {
+                priotityIcon = "fas fa-angle-up"
+                priorityBg = "info-box-icon elevation-1 bg-yellow"
+            } else if (priority == "Medium") {
+                priotityIcon = "fas fa-angle-double-up"
+                priorityBg = "info-box-icon elevation-1 bg-orange"
+            } else if (priority == "High") {
+                priotityIcon = "fas fa-exclamation-triangle"
+                priorityBg = "info-box-icon elevation-1 bg-red"
+            }
+
+            $("#priorityBgSpan").removeClass();
+            $("#priorityIcon").removeClass();
+            $("#prioritySpan").text("");
+
+            $("#priorityBgSpan").addClass(priorityBg);
+            $("#priorityIcon").addClass(priotityIcon);
+            $("#prioritySpan").text(priority);
+
+
+            var type = "@Model.Ticket.TicketType.Name";
+            var typeIcon = ""
+            var typeBg = ""
+
+            if (type == "Feature Request") {
+                typeIcon = "fas fa-hand-paper"
+                typeBg = "info-box-icon elevation-1 bg-green"
+            } else if (type == "UI") {
+                typeIcon = "fas fa-mouse-pointer"
+                typeBg = "info-box-icon elevation-1 bg-yellow"
+            } else if (type == "Server") {
+                typeIcon = "fas fa-server"
+                typeBg = "info-box-icon elevation-1 bg-orange"
+            } else if (type == "Defect") {
+                typeIcon = "fas fa-exclamation-triangle"
+                typeBg = "info-box-icon elevation-1 bg-red"
+            }
+
+            $("#typeBgSpan").removeClass();
+            $("#typeIcon").removeClass();
+            $("#typeSpan").text("");
+
+            $("#typeBgSpan").addClass(typeBg);
+            $("#typeIcon").addClass(typeIcon);
+            $("#typeSpan").text(type);
+        }
+
+        $(".aStatusClass").on("click", function () {
+            var icon = $(this).find(".iStatusClass").attr("class").replace("iStatusClass", "");
+            var bgColor = $(this).find(".elevation-1").attr("class");
+            var text = $(this).find(".info-box-content > span").text();
+            var bgClass = $("#statusBgSpan").attr("class");
+            $("#statusBgSpan").removeClass(bgClass);
+            $("#statusBgSpan").addClass(bgColor);
+
+            var icoClass = $("#statusIcon").attr("class");
+            $("#statusIcon").removeClass(icoClass);
+            $("#statusIcon").addClass(icon);
+            $("#statusSpan").text(text);
+        })
+
+        $(".aPriorityClass").on("click", function () {
+            var icon = $(this).find(".iPriorityClass").attr("class").replace("iPriorityClass", "");
+            var bgColor = $(this).find(".elevation-1").attr("class");
+            var text = $(this).find(".info-box-content > span").text();
+            var bgClass = $("#priorityBgSpan").attr("class");
+            $("#priorityBgSpan").removeClass(bgClass);
+            $("#priorityBgSpan").addClass(bgColor);
+
+            var icoClass = $("#priorityIcon").attr("class");
+            $("#priorityIcon").removeClass(icoClass);
+            $("#priorityIcon").addClass(icon);
+            $("#prioritySpan").text(text);
+        })
+
+        $(".aTypeClass").on("click", function () {
+            var icon = $(this).find(".iTypeClass").attr("class").replace("iTypeClass", "");
+            var bgColor = $(this).find(".elevation-1").attr("class");
+            var text = $(this).find(".info-box-content > span").text();
+            var bgClass = $("#typeBgSpan").attr("class");
+            $("#typeBgSpan").removeClass(bgClass);
+            $("#typeBgSpan").addClass(bgColor);
+
+            var icoClass = $("#typeIcon").attr("class");
+            $("#typeIcon").removeClass(icoClass);
+            $("#typeIcon").addClass(icon);
+            $("#typeSpan").text(text);
+        })
+
+    </script>
+
+}

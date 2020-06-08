@@ -1,0 +1,96 @@
+﻿@using Bug_Tracker.Models
+@model IEnumerable<Ticket>
+
+@{
+    UserRoleHelper RoleHelper = new UserRoleHelper();
+    var header = ViewBag.TicketIndexHeader;
+}
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark" style="font-weight: bold; font-size: 300%">@header</h1>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+
+
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title" style="font-weight: bold">All Users</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <table id="ticketsTable" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Creator</th>
+                            <th>Priority</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                            <th>Created</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ticket in Model)
+                        {
+                            <tr onclick="location.href = '@Url.Action("Details", "Tickets", new { id = ticket.Id })'" style="cursor: pointer">
+                                <td>@ticket.Title</td>
+                                <td>@ticket.OwnerUser.FullName</td>
+                                <td>@ticket.TicketPriority.Name</td>
+                                <td>@ticket.TicketType.Name</td>
+                                <td>@ticket.TicketStatus.Name</td>
+                                @if (ticket.Updated != null)
+                                {
+                                    <td>@ticket.Updated</td>
+                                }
+                                else
+                                {
+                                    <td>N/A</td>
+                                }
+                                <td>@ticket.Created</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>Title</th>
+                            <th>Creator</th>
+                            <th>Priority</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Updated</th>
+                            <th>Created</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- The Modal -->
+
+</section>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#ticketsTable").DataTable({
+                "order": [[2, "asc"]]
+            });
+        });
+    </script>
+}

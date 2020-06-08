@@ -1,0 +1,599 @@
+﻿@using Bug_Tracker.Models
+@using Microsoft.AspNet.Identity;
+@model ProjectDetailsViewModel
+
+@{
+    UserRoleHelper RoleHelper = new UserRoleHelper();
+    ProjectsHelper ProjectHelper = new ProjectsHelper();
+}
+
+    <link href="~/Content/datatables-select/css/CustomSelect.css" rel="stylesheet" />
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                
+                <h1 class="m-0 text-dark" style="font-weight: bold; font-size: 300%">
+                    <a style="cursor: pointer" data-target="#editProjectModal" data-toggle="modal">
+                        <i class="fas fa-edit" style="color: #037bff"></i>
+                    </a>
+                     @Model.Project.Name
+                </h1>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+
+        <!-- Info boxes -->
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="row">
+                    @if (Model.UserRole == "Admin" || Model.UserRole == "Project Manager")
+                    {
+                        <div class="col-6">
+                            <a style="color: black; cursor:pointer" data-target="#addUsersModal" data-toggle="modal">
+                                <div class="info-box mb-3 bg-blue">
+                                    <span class="info-box-icon bg-white elevation-1"><i class="fas fa-user-plus" style="color: #0067d6"></i></span>
+                                    <span class="info-box-content" style="font-size: large; font-weight: bold">Manage Users</span>
+                                    <!-- /.info-box-content -->
+                                </div>
+                            </a>
+                        </div>
+                    }
+                    @if (Model.UserRole == "Submitter")
+                    {
+                        <div class="col-6">
+                            <a style="color: black; cursor:pointer" href=@Url.Action("Create", "Tickets", new { projectId = Model.Project.Id})>
+                                <div class="info-box mb-3 bg-blue">
+                                    <span class="info-box-icon bg-white elevation-1"><i class="fas fa-ticket-alt" style="color: #0067d6"></i></span>
+                                    <span class="info-box-content" style="font-size: large; font-weight: bold">Create Ticket</span>
+                                    <i class="fas fa-plus-circle pull-right" style="color: white"></i>
+                                    <!-- /.info-box-content -->
+                                </div>
+                            </a>
+                        </div>
+                    }
+                    <div class="col-6">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-ticket-alt"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text" style="font-size: large; font-weight: bold">Tickets</span>
+                                <span class="info-box-number">@Model.Tickets.Where(t => t.TicketStatus.Name.Contains("Assigned")).Count() <small>Active</small></span>
+                            </div>
+                            <!-- /.info-box-content -->
+                        </div>
+                        <!-- /.info-box -->
+                    </div>
+                    @if (Model.UserRole == "Developer")
+                    {
+                        <div class="col-6">
+                            @if (Model.Managers.FirstOrDefault() != null)
+                            {
+                                <div class="info-box mb-3">
+                                    <span class="info-box-icon bg-success elevation-1"><i class="fas fa-male"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text" style="font-size: large; font-weight: bold">Manager</span>
+                                        @if (Model.UserRole == "Admin" || Model.UserRole == "Project Manager")
+                                        {
+                                            <a href=@Url.Action("Index", "Account", new { id = Model.Managers.FirstOrDefault().Id}) style="color:black">
+                                                <span class="info-box-text">@Model.Managers.FirstOrDefault().FullName</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="info-box-text">@Model.Managers.FirstOrDefault().FullName</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="info-box mb-3">
+                                    <span class="info-box-icon bg-success elevation-1"><i class="fas fa-male"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text" style="font-size: large; font-weight: bold">Manager</span>
+                                        <span class="info-box-text">Not assigned</span>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- /.info-box -->
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- /.col -->
+            <!-- fix for small devices only -->
+            <div class="clearfix hidden-md-up"></div>
+            <div class="col-lg-7">
+                <div class="row">
+                    @if (Model.UserRole != "Developer")
+                    {
+                        <div class="col-4">
+                            @if (Model.Managers.FirstOrDefault() != null)
+                            {
+                                <div class="info-box mb-3">
+                                    <span class="info-box-icon bg-success elevation-1"><i class="fas fa-male"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text" style="font-size: large; font-weight: bold">Manager</span>
+                                        @if (Model.UserRole == "Admin" || Model.UserRole == "Project Manager")
+                                        {
+                                            <a href=@Url.Action("Index", "Account", new { id = Model.Managers.FirstOrDefault().Id}) style="color:black">
+                                                <span class="info-box-text">@Model.Managers.FirstOrDefault().FullName</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="info-box-text">@Model.Managers.FirstOrDefault().FullName</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                if (Model.UserRole == "Admin")
+                                {
+                                    <div class="info-box mb-3 bg-red">
+                                        <span class="info-box-icon elevation-1 bg-white"><i class="fas fa-exclamation-triangle" style="color: #dc3545"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Manager</span>
+                                            <span class="info-box-number" style="font-size: 90%">Assign a manager!</span>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="info-box mb-3">
+                                        <span class="info-box-icon bg-success elevation-1"><i class="fas fa-male"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text" style="font-size: large; font-weight: bold">Manager</span>
+                                            <span class="info-box-text">Not assigned</span>
+                                        </div>
+                                    </div>
+                                }
+                            }
+
+                            <!-- /.info-box -->
+                        </div>
+                    }
+
+                    <!-- /.col -->
+                    @if (Model.UserRole == "Admin" || Model.UserRole == "Project Manager")
+                    {
+                        <div class="col-4">
+                            <div class="info-box mb-3">
+                                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-laptop"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Developers</span>
+                                    <span class="info-box-number">@Model.Developers.Count()</span>
+                                </div>
+                                <!-- /.info-box-content -->
+                            </div>
+                            <!-- /.info-box -->
+                        </div>
+                        <!-- /.col -->
+                        <div class="col-4">
+                            <div class="info-box mb-3">
+                                <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-check"></i></span>
+
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Submitters</span>
+                                    <span class="info-box-number">@Model.Submitters.Count()</span>
+                                </div>
+                                <!-- /.info-box-content -->
+                            </div>
+                            <!-- /.info-box -->
+                        </div>
+                    }
+                </div>
+            </div>
+
+
+
+
+            <!-- /.col -->
+        </div>
+        <!-- Tables -->
+        @if (Model.UserRole == "Admin" || Model.UserRole == "Project Manager")
+        {
+            <div class="row">
+                <div class="col">
+                    <!-- TABLE: ALL USERS -->
+                    <div class="card collapsed-card">
+                        <a style="cursor: pointer" data-card-widget="collapse">
+                            <div class="card-header">
+                                <h3 class="card-title" style="font-weight: bold">Users</h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </a>
+                            <div class="card-body">
+                                <table id="usersTable" class="table table-bordered table-striped " style="table-layout: fixed">
+                                    <thead>
+                                        <tr>
+                                            <th>First Name</th>
+                                            <th>Last Name</th>
+                                            <th>Role</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var user in Model.Users)
+                                        {
+                                            <tr onclick="location.href = '@Url.Action("Index", "Account", new { id=user.Id })'" style="cursor: pointer">
+                                                <td>@user.FirstName</td>
+                                                <td>@user.LastName</td>
+                                                <td>@RoleHelper.ListUserRoles(user.Id).ToList()[0]</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th>First Name</th>
+                                            <th>Last Name</th>
+                                            <th>Role</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+        }
+        <div class="row">
+            <!-- TABLE: ALL TICKETS -->
+            <div class="col">
+                <div class="card">
+                    <a style="cursor: pointer" data-card-widget="collapse">
+                        <div class="card-header">
+                            <h3 class="card-title" style="font-weight: bold">Tickets</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                            <!--Drop downs for filtering-->
+                        </div>
+                    </a>
+                    
+                    <div class="card-body">
+                        <table id="ticketsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Creator</th>
+                                    <th>Priority</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Updated</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ticket in Model.Tickets)
+                                {
+                                    <tr onclick="location.href = '@Url.Action("Details", "Tickets", new { id = ticket.Id })'" style="cursor: pointer">
+                                        <td>@ticket.Title</td>
+                                        <td>@ticket.OwnerUser.FullName</td>
+                                        <td>@ticket.TicketPriority.Name</td>
+                                        <td>@ticket.TicketType.Name</td>
+                                        <td>@ticket.TicketStatus.Name</td>
+                                        @if (ticket.Updated != null)
+                                        {
+                                            <td>@ticket.Updated</td>
+                                        }
+                                        else
+                                        {
+                                            <td>N/A</td>
+                                        }
+                                        <td>@ticket.Created</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Creator</th>
+                                    <th>Priority</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Updated</th>
+                                    <th>Created</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+    <!-- The Modal -->
+    <div class="modal fade" id="addUsersModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" style="font-weight: bold">All Users</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Select a user to add them to the project.</h3>
+                        </div>
+                        <div class="card-body">
+                            <table id="allUsersDataTable" class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Role</th>
+                                        <th>Number of Projects</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.AllUsers)
+                                    {
+                                        var userRole = RoleHelper.ListUserRoles(user.Id).FirstOrDefault();
+                                        if (ProjectHelper.IsUserOnProject(user.Id, Model.Project.Id))
+                                        {
+                                            if (userRole == "Project Manager")
+                                            {
+                                                <tr style="cursor: pointer" class="clickable-tr selectManager">
+                                                    <td>@user.FirstName</td>
+                                                    <td>@user.LastName</td>
+                                                    <td>@RoleHelper.ListUserRoles(user.Id).ToList()[0]</td>
+                                                    <td>@ProjectHelper.ListUserProjects(user.Id).Count()</td>
+                                                    @Html.Hidden("userId", user.Id, new { @class = "tableUserIdClass" })
+                                                    @Html.Hidden("userRole", userRole, new { @class = "tableUserRoleClass" })
+                                                </tr>
+                                            }
+                                            else if (userRole == "Developer")
+                                            {
+                                                <tr style="cursor: pointer" class="clickable-tr selectDeveloper">
+                                                    <td>@user.FirstName</td>
+                                                    <td>@user.LastName</td>
+                                                    <td>@RoleHelper.ListUserRoles(user.Id).ToList()[0]</td>
+                                                    <td>@ProjectHelper.ListUserProjects(user.Id).Count()</td>
+                                                    @Html.Hidden("userId", user.Id, new { @class = "tableUserIdClass" })
+                                                    @Html.Hidden("userRole", userRole, new { @class = "tableUserRoleClass" })
+                                                </tr>
+                                            }
+                                            else if (userRole == "Submitter")
+                                            {
+                                                <tr style="cursor: pointer" class="clickable-tr selectSubmitter">
+                                                    <td>@user.FirstName</td>
+                                                    <td>@user.LastName</td>
+                                                    <td>@RoleHelper.ListUserRoles(user.Id).ToList()[0]</td>
+                                                    <td>@ProjectHelper.ListUserProjects(user.Id).Count()</td>
+                                                    @Html.Hidden("userId", user.Id, new { @class = "tableUserIdClass" })
+                                                    @Html.Hidden("userRole", userRole, new { @class = "tableUserRoleClass" })
+                                                </tr>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <tr style="cursor: pointer" class="clickable-tr">
+                                                <td>@user.FirstName</td>
+                                                <td>@user.LastName</td>
+                                                <td>@RoleHelper.ListUserRoles(user.Id).ToList()[0]</td>
+                                                <td>@ProjectHelper.ListUserProjects(user.Id).Count()</td>
+                                                @Html.Hidden("userId", user.Id, new { @class = "tableUserIdClass" })
+                                                @Html.Hidden("userRole", userRole, new { @class = "tableUserRoleClass" })
+                                            </tr>
+                                        }
+
+
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Role</th>
+                                        <th>Number of Projects</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal" onclick="addUserToProject(idArray)">Save</button>
+                </div>
+
+
+
+
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal -->
+    <div id="editProjectModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            @using (Html.BeginForm("Edit", "Projects", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.Hidden("id", Model.Project.Id)
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title" style="font-weight: bold">
+                            Edit Project
+                        </h2>
+                    </div>
+                    <div class="modal-body">
+                        <h4>Title</h4>
+                        @Html.TextBox("projectTitle", Model.Project.Name, new { @class = "form-control" })
+                        <h4 style="padding-top: 3%">Description</h4>
+                        @Html.TextBox("projectDescription", Model.Project.Description, new { @class = "form-control" })
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                </div>
+            }
+
+
+        </div>
+    </div>
+</section>
+
+@section scripts {
+    
+    <script>
+
+        
+        var tableRow = $(".clickable-tr");
+        var idArray = new Array();
+        var idManagerArray = new Array();
+
+        $(document).ready(function () {
+            for (var i = 0; i < tableRow.length; i++) {
+                console.log(idArray)
+                console.log(idManagerArray)
+                var role = tableRow[i].children[5].value;
+                var userId = tableRow[i].children[4].value
+                if (role == "Project Manager") {
+                    if (tableRow[i].classList.contains("selectManager")) {
+                        idManagerArray.push(userId)
+                    }
+                }
+                if (role == "Developer") {
+                    if (tableRow[i].classList.contains("selectDeveloper")) {
+                        idArray.push(userId)
+                    }
+                }
+                if (role == "Submitter") {
+                    if (tableRow[i].classList.contains("selectSubmitter")) {
+                        idArray.push(userId)
+                    }
+                }
+            }
+            
+        });
+
+        function deselectManagerRows() {
+            for (var i = 0; i < tableRow.length; i++) {
+                var rowRole = tableRow[i].children[5].value
+                if (rowRole == "Project Manager") {
+                    console.log(tableRow[i])
+                    tableRow[i].removeAttribute("class")
+                    tableRow[i].className = "clickable-tr"
+                }
+            }
+            console.log("Deselect manager rows called")
+        }
+
+
+        function addUserToProject(idArray) {
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("AddUserToProject", "Projects")",
+                data: {
+                        "userIds": idArray.concat(idManagerArray),
+                        "projectId": @Model.Project.Id
+                        },
+                success: function () {
+                    location.reload();
+                }
+
+            });
+
+            console.log("Button has been clicked")
+        }
+
+        $(function () {
+
+            $("#ticketsTable").DataTable({
+                        "order": [[ 6, "desc" ]]
+                    });
+            $('#usersTable').DataTable({
+                        "order": [[ 2, "asc" ]]
+                    });
+            $('#allUsersDataTable').DataTable({
+                        "order": [[ 2, "asc" ]]
+                    });
+
+            $("#tableUserIdClass").hide();
+
+
+
+
+            tableRow.click(function () {
+                //#abf5bc light green #ccf8ff light cyan #fff0c4 light yellow
+                const toggle = (array, item) => _.xor(array, [item]);
+                var userId = $(this).find(".tableUserIdClass").val();
+                var userRole = $(this).find(".tableUserRoleClass").val();
+                var rowIsSelected = false
+                if (userRole == "Project Manager") {
+                    rowIsSelected = $(this).hasClass("selectManager")
+                } else if (userRole == "Developer") {
+                    rowIsSelected = $(this).hasClass("selectDeveloper")
+                } else if (userRole == "Submitter") {
+                    rowIsSelected = $(this).hasClass("selectSubmitter")
+                }
+
+                if (userRole == "Project Manager") {
+                    if (!rowIsSelected) {
+                        deselectManagerRows()
+                        $(this).removeClass();
+                        $(this).addClass("clickable-tr selectManager")
+                        idManagerArray = []
+                        idManagerArray.push(userId)
+                    } else {
+                        $(this).removeClass();
+                        $(this).addClass("clickable-tr")
+                        idManagerArray = []
+                    }
+                } else {
+                    if (!rowIsSelected) {
+                        if (userRole == "Developer") {
+                            $(this).removeClass();
+                            $(this).addClass("clickable-tr selectDeveloper")
+                        }
+                        if (userRole == "Submitter") {
+                            $(this).removeClass();
+                            $(this).addClass("clickable-tr selectSubmitter")
+                        }
+                    } else {
+                        $(this).removeClass();
+                        $(this).addClass("clickable-tr")
+                    }
+                    idArray = toggle(idArray, userId);
+                }
+
+                
+
+                console.log(userRole);
+                console.log(idArray);
+                console.log(idManagerArray)
+            })
+
+        });
+
+    </script>
+}

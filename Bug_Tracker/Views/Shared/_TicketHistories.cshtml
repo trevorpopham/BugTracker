@@ -1,0 +1,45 @@
+﻿<div class="card">
+    <div class="card-header">
+        <h3 class="card-title" style="font-weight: bold">Ticket Histories</h3>
+        <div class="card-tools">
+            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+        <!--Drop downs for filtering-->
+    </div>
+    <div class="card-body">
+        <table id="ticketHistoriesTable" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>New Value</th>
+                    <th>Old Value</th>
+                    <th>User</th>
+                    <th>Changed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var history in Model.Ticket.TicketHistorys)
+                {
+                    <tr>
+                        <td>@history.Property</td>
+                        <td>@history.NewValue</td>
+                        <td>@history.OldValue</td>
+                        <td>@history.User.FullName</td>
+                        <td>@history.Changed</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Property</th>
+                    <th>New Value</th>
+                    <th>Old Value</th>
+                    <th>User</th>
+                    <th>Changed</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>

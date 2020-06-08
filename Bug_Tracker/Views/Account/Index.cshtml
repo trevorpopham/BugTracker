@@ -1,0 +1,617 @@
+﻿@using Bug_Tracker.Models
+@model UserViewModel
+
+@{ 
+    ProjectsHelper ProjectHelper = new ProjectsHelper();
+}
+
+<!-- Content Header (Page header) -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark" style="font-weight: bold; font-size: 300%">@Model.User.FirstName's Profile</h1>
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content-header -->
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-4">
+                <div class="card card-widget widget-user">
+                    <!-- Add the bg color to the header using any of the bg-* classes -->
+                    <div class="widget-user-header bg-success">
+                        <h3 class="widget-user-username">@Model.User.FirstName @Model.User.LastName (@Model.User.DisplayName)</h3>
+                        <h5 class="widget-user-desc">@Model.UserRole</h5>
+                    </div>
+                    <div class="widget-user-image">
+                        <img class="img-circle elevation-2" src=@Model.User.AvatarPath alt="error">
+                    </div>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-sm-6 border-right">
+                                <div class="description-block">
+                                    <h5 class="description-header">@Model.Projects.Count()</h5>
+                                    <span class="description-text">PROJECTS</span>
+                                </div>
+                                <!-- /.description-block -->
+                            </div>
+                            <!-- /.col -->
+                            <div class="col-sm-6">
+                                <div class="description-block">
+                                    <h5 class="description-header">@Model.Tickets.Count()</h5>
+                                    <span class="description-text">TICKETS</span>
+                                </div>
+                                <!-- /.description-block -->
+                            </div>
+                        </div>
+                        <!-- /.row -->
+                    </div>
+                </div>
+
+
+
+                <div class="accordion" id="profileAccordion">
+
+                    @if (Model.LoggedInUserRole == "Admin" || Model.LoggedInUserRole == "Project Manager")
+                    {
+                        if (Model.LoggedInUserRole == "Project Manager" && Model.UserRole == "Project Manager")
+                        { }
+                        else
+                        {
+                            <div id="headingOne" class="info-box mb-3" style="cursor: pointer" data-target="#projectCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="projectCollapse">
+                                <span class="info-box-icon bg-gradient-indigo elevation-1"><i class="fas fa-user"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Add to Project</span>
+                                </div>
+                                <i class="fas fa-chevron-down float-right"></i>
+                                <!-- /.info-box-content -->
+                            </div>
+                            <div id="projectCollapse" class="collapse" aria-labelledby="headingOne"
+                                 data-parent="#profileAccordion">
+                                @foreach (var project in Model.AllProjects)
+                                {
+                                    if (ProjectHelper.IsUserOnProject(Model.User.Id, project.Id))
+                                    {
+                                        <div style="padding-left: 20%">
+                                            <a href=@Url.Action("ToggleUserOnProject", "Account", new { id = Model.User.Id, projectId = project.Id}) style="color:black">
+                                                <div id="headingOne" class="info-box mb-3 bg-cyan" style="cursor: pointer" data-target="#projectCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="projectCollapse">
+                                                    <span class="info-box-icon bg-white elevation-1"><i class="far fa-edit" style="color: #128294"></i></span>
+                                                    <div class="info-box-content">
+                                                        <span class="info-box-text" style="font-size: large; font-weight: bold">@project.Name</span>
+                                                    </div>
+                                                    <!-- /.info-box-content -->
+                                                </div>
+                                            </a>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div style="padding-left: 20%">
+                                            <a href=@Url.Action("ToggleUserOnProject", "Account", new { id = Model.User.Id, projectId = project.Id}) style="color:black">
+                                                <div id="headingOne" class="info-box mb-3" style="cursor: pointer" data-target="#projectCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="projectCollapse">
+                                                    <span class="info-box-icon bg-cyan elevation-1"><i class="far fa-edit"></i></span>
+                                                    <div class="info-box-content">
+                                                        <span class="info-box-text" style="font-size: large; font-weight: bold">@project.Name</span>
+                                                    </div>
+                                                    <!-- /.info-box-content -->
+                                                </div>
+                                            </a>
+                                        </div>
+                                    }
+
+
+                                }
+                            </div>
+                        }
+
+                    }
+
+                    @if (Model.LoggedInUser != Model.User)
+                    {
+                        if (Model.LoggedInUserRole == "Admin")
+                        {
+                            <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                <span class="info-box-icon bg-blue elevation-1"><i class="fas fa-edit"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Change Role</span>
+                                </div>
+                                <i class="fas fa-chevron-down float-right"></i>
+                                <!-- /.info-box-content -->
+                            </div>
+                            <div id="roleCollapse" class="collapse" aria-labelledby="headingTwo"
+                                 data-parent="#profileAccordion">
+
+                                @if (Model.UserRole == "Admin")
+                                {
+                                    <div style="padding-left: 20%">
+                                        <a href=@Url.Action("ChangeRole", "Account", new { id = Model.User.Id, role = "Admin"}) style="color:black">
+                                            <div id="headingTwo" class="info-box mb-3 bg-red" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                                <span class="info-box-icon bg-white elevation-1"><i class="fas fa-user-tie" style="color: #c62232"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Admin</span>
+                                                </div>
+                                                <!-- /.info-box-content -->
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div style="padding-left: 20%">
+                                        <a href=@Url.Action("ChangeRole", "Account", new { id = Model.User.Id, role = "Admin"}) style="color:black">
+                                            <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                                <span class="info-box-icon bg-red elevation-1"><i class="fas fa-user-tie"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Admin</span>
+                                                </div>
+                                                <!-- /.info-box-content -->
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+
+
+                                @if (Model.UserRole == "Project Manager")
+                                {
+                                    <div style="padding-left: 20%">
+                                        <a href=@Url.Action("ChangeRole", "Account", new { id = Model.User.Id, role = "Project Manager"}) style="color:black">
+                                            <div id="headingTwo" class="info-box mb-3 bg-green" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                                <span class="info-box-icon bg-white elevation-1"><i class="fas fa-male" style="color: #208637"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Manager</span>
+                                                </div>
+                                                <!-- /.info-box-content -->
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div style="padding-left: 20%">
+                                        <a href=@Url.Action("ChangeRole", "Account", new { id = Model.User.Id, role = "Project Manager"}) style="color:black">
+                                            <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                                <span class="info-box-icon bg-green elevation-1"><i class="fas fa-male"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Manager</span>
+                                                </div>
+                                                <!-- /.info-box-content -->
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+
+                                @if (Model.UserRole == "Developer")
+                                {
+                                    <div style="padding-left: 20%">
+                                        <a href=@Url.Action("ChangeRole", "Account", new { id = Model.User.Id, role = "Developer"}) style="color:black">
+                                            <div id="headingTwo" class="info-box mb-3 bg-cyan" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                                <span class="info-box-icon bg-white elevation-1"><i class="fas fa-laptop" style="color: #128294"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Developer</span>
+                                                </div>
+                                                <!-- /.info-box-content -->
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div style="padding-left: 20%">
+                                        <a href=@Url.Action("ChangeRole", "Account", new { id = Model.User.Id, role = "Developer"}) style="color:black">
+                                            <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                                <span class="info-box-icon bg-cyan elevation-1"><i class="fas fa-laptop"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Developer</span>
+                                                </div>
+                                                <!-- /.info-box-content -->
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                                @if (Model.UserRole == "Submitter")
+                                {
+                                    <div style="padding-left: 20%">
+                                        <a href=@Url.Action("ChangeRole", "Account", new { id = Model.User.Id, role = "Submitter"}) style="color:black">
+                                            <div id="headingTwo" class="info-box mb-3 bg-yellow" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                                <span class="info-box-icon bg-white elevation-1"><i class="fas fa-check" style="color: #ffc107"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Submitter</span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div style="padding-left: 20%">
+                                        <a href=@Url.Action("ChangeRole", "Account", new { id = Model.User.Id, role = "Submitter"}) style="color:black">
+                                            <div id="headingTwo" class="info-box mb-3" style="cursor: pointer" data-target="#roleCollapse" data-toggle="collapse" aria-expanded="true" aria-controls="roleCollapse">
+                                                <span class="info-box-icon bg-yellow elevation-1"><i class="fas fa-check"></i></span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Submitter</span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+
+                </div>
+                @*@if (Model.LoggedInUserRole == "Admin" || Model.LoggedInUserRole == "Project Manager")
+                {
+                    if (Model.UserRole == "Developer")
+                    {
+                        <a style="cursor: pointer" data-toggle="modal" data-target="#assignDeveloperModal">
+                            <div class="info-box mb-3">
+                                <span class="info-box-icon bg-orange elevation-1"><i class="fas fa-ticket-alt"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text" style="font-size: large; font-weight: bold">Assign a Ticket</span>
+                                </div>
+                                <i class="fas fa-plus-circle float-right"></i>
+                            </div>
+                        </a>
+                    }
+
+                }*@
+                @if (Model.User == Model.LoggedInUser)
+                {
+                    <a data-target="#editAccountModal" data-toggle="modal" style="cursor: pointer; color: black">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-red elevation-1"><i class="fas fa-user-edit"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text" style="font-size: large; font-weight: bold">Edit Account</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+            <div class="col-8">
+                <!-- TABLE: ALL TICKETS -->
+                <div class="card">
+                    <div class="card-header">
+                        @if (Model.UserRole == "Admin")
+                        {
+                            <h3 class="card-title" style="font-weight: bold">All Projects</h3>
+                        }
+                        else
+                        {
+                            <h3 class="card-title" style="font-weight: bold">Assigned Projects</h3>
+                        }
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                        <!--Drop downs for filtering-->
+                    </div>
+                    <div class="card-body">
+                        <table id="assignedProjectsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Tickets</th>
+                                    <th>Developer</th>
+                                    <th>Submitters</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var project in Model.Projects)
+                                {
+
+
+                                    <tr onclick="location.href = '@Url.Action("Details", "Projects", new { id = project.Id })'" style="cursor: pointer">
+                                        <td>@project.Name</td>
+                                        <td>@project.Tickets.Count()</td>
+                                        <td>@project.GetDevelopersInProject().Count()</td>
+                                        <td>@project.GetSubmittersInProject().Count()</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Tickets</th>
+                                    <th>Developer</th>
+                                    <th>Submitters</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        @if (Model.UserRole == "Admin" || Model.UserRole == "Project Manager")
+                        {
+                            <h3 class="card-title" style="font-weight: bold">All tickets</h3>
+                        }
+                        else if (Model.UserRole == "Developer")
+                        {
+                            <h3 class="card-title" style="font-weight: bold">Assigned Tickets</h3>
+                        }
+                        else if (Model.UserRole == "Submitter")
+                        {
+                            <h3 class="card-title" style="font-weight: bold">Created Tickets</h3>
+                        }
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                        <!--Drop downs for filtering-->
+                    </div>
+                    <div class="card-body">
+                        <table id="assignedTicketsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Owner</th>
+                                    <th>Priority</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Updated</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ticket in Model.Tickets)
+                                {
+                                    <tr onclick="location.href = '@Url.Action("Details", "Tickets", new { id = ticket.Id })'" style="cursor: pointer">
+                                        <td>@ticket.Title</td>
+                                        <td>@ticket.OwnerUser.FullName</td>
+                                        <td>@ticket.TicketPriority.Name</td>
+                                        <td>@ticket.TicketType.Name</td>
+                                        <td>@ticket.TicketStatus.Name</td>
+                                        @if (ticket.Updated != null)
+                                        {
+                                            <td>@ticket.Updated</td>
+                                        }
+                                        else
+                                        {
+                                            <td>N/A</td>
+                                        }
+                                        <td>@ticket.Created</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Owner</th>
+                                    <th>Priority</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Updated</th>
+                                    <th>Created</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title" style="font-weight: bold">Ticket Histories</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                        <!--Drop downs for filtering-->
+                    </div>
+                    <div class="card-body">
+                        <table id="ticketHistoriesTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>New Value</th>
+                                    <th>Old Value</th>
+                                    <th>Changed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var history in Model.User.TicketHistorys)
+                                {
+                                    <tr onclick="location.href = '@Url.Action("Details", "Ticket", new { id = history.TicketId })'" style="cursor: pointer">
+                                        <td>@history.Property</td>
+                                        <td>@history.NewValue</td>
+                                        <td>@history.OldValue</td>
+                                        <td>@history.Changed</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th>Property</th>
+                                    <th>New Value</th>
+                                    <th>Old Value</th>
+                                    <th>Changed</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- TABLE: ALL USERS -->
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div class="modal fade" id="editAccountModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                @using (Html.BeginForm("Edit", "Account", FormMethod.Post))
+                {
+                    @Html.Hidden("id", Model.User.Id)
+
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <div class="col">
+                            <h3 class="modal-title" style="text-align: center; justify-content: center; font-weight: bold">Edit Account</h3>
+                        </div>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col" style="text-align: center">
+                                <img src=@Model.User.AvatarPath class="rounded-circle center" style="width: 15%; ">
+                            </div>
+                        </div>
+                        <div class="row" style="padding-top:2%">
+                            <div class="col" style="text-align: center">
+                                <input name="image" type="file" id="fileUpload">
+                            </div>
+                        </div>
+                        <div class="row" style="padding-top:2%">
+                            <div class="col" style="text-align: center">
+                                <h4>Display Name</h4>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                @Html.TextBox("displayName", Model.User.DisplayName, new { @class = "form-control", @style = "text-align: center" })
+                            </div>
+                        </div>
+                        <div class="row" style="padding-top:2%">
+                            <div class="col" style="text-align: center">
+                                <h4>First Name</h4>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                @Html.TextBox("firstName", Model.User.FirstName, new { @class = "form-control", @style = "text-align: center" })
+                            </div>
+                        </div>
+                        <div class="row" style="padding-top:2%">
+                            <div class="col" style="text-align: center">
+                                <h4>Last Name</h4>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                @Html.TextBox("lastName", Model.User.LastName, new { @class = "form-control", @style = "text-align: center" })
+                            </div>
+                        </div>
+                        <div class="row" style="padding-top:2%">
+                            <div class="col" style="text-align: center">
+                                <h4>Email</h4>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                @Html.TextBox("email", Model.User.Email, new { @class = "form-control", @style = "text-align: center" })
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+
+                }
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- The Modal -->
+    @*<div class="modal fade" id="assignDeveloperModal">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                 Modal Header 
+                <div class="modal-header">
+                    <h4 class="modal-title" style="font-weight: bold">Select a Ticket</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                 Modal body 
+                <div class="modal-body">
+                    <table id="ticketsTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Creator</th>
+                                <th>Priority</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Updated</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ticket in Model.TicketsForAssigningDeveloper)
+                            {
+                                <tr onclick="location.href = '@Url.Action("AssignDeveloperToTicket", "Tickets", new { ticketId = ticket.Id, userId = Model.User.Id })'" style="cursor: pointer">
+                                    <td>@ticket.Title</td>
+                                    <td>@ticket.OwnerUser.FullName</td>
+                                    <td>@ticket.TicketPriority.Name</td>
+                                    <td>@ticket.TicketType.Name</td>
+                                    <td>@ticket.TicketStatus.Name</td>
+                                    @if (ticket.Updated != null)
+                                    {
+                                        <td>@ticket.Updated</td>
+                                    }
+                                    else
+                                    {
+                                        <td>N/A</td>
+                                    }
+                                    <td>@ticket.Created</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>Title</th>
+                                <th>Creator</th>
+                                <th>Priority</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Updated</th>
+                                <th>Created</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                 Modal footer 
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                </div>
+
+            </div>
+        </div>
+    </div>*@
+
+</section>
+
+
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#assignedProjectsTable").DataTable({
+                        "order": [[ 1, "desc" ]]
+            });
+            $('#assignedTicketsTable').DataTable({
+                        "order": [[ 6, "desc" ]]
+            });
+            $('#ticketHistoriesTable').DataTable({
+                        "order": [[ 3, "desc" ]]
+            });
+            //$('#ticketsTable').DataTable({
+            //            "order": [[ 6, "desc" ]]
+            //});
+        });
+    </script>
+}

@@ -1,0 +1,440 @@
+﻿@using Bug_Tracker.Models
+@using Microsoft.AspNet.Identity;
+@{
+    ApplicationDbContext db = new ApplicationDbContext();
+    ProjectsHelper ProjectHelper = new ProjectsHelper();
+    UserRoleHelper RoleHelper = new UserRoleHelper();
+    ApplicationUser user = db.Users.Find(User.Identity.GetUserId());
+    var userRole = user.ReturnUserRole();
+}
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Bug Tracker</title>
+        <!-- Tell the browser to be responsive to screen width -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="shortcut icon" type="image/png" href="/favicon.png" />
+        <!-- Font Awesome -->
+        <link href="~/Content/fontawesome-free/css/all.min.css" rel="stylesheet" />
+        <!-- Ionicons -->
+        <link rel="stylesheet" href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+        <!-- Tempusdominus Bbootstrap 4 -->
+        <link href="~/Content/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
+        <!-- iCheck -->
+        <link href="~/Content/icheck-bootstrap/icheck-bootstrap.min.css" rel="stylesheet" />
+        <!-- JQVMap -->
+        <link href="~/Content/jqvmap/jqvmap.min.css" rel="stylesheet" />
+        <!-- Theme style -->
+        <link href="~/Content/dist/css/adminlte.min.css" rel="stylesheet" />
+        <!-- overlayScrollbars -->
+        <link href="~/Content/overlayScrollbars/css/OverlayScrollbars.min.css" rel="stylesheet" />
+        <!-- Daterange picker -->
+        <link href="~/Content/daterangepicker/daterangepicker.css" rel="stylesheet" />
+        <!-- summernote -->
+        <link href="~/Content/summernote/summernote-bs4.css" rel="stylesheet" />
+        <!-- Google Font: Source Sans Pro -->
+        <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+
+        <link href="~/Content/datatables-bs4/css/dataTables.bootstrap4.css" rel="stylesheet" />
+        <link href="~/Content/datatables-select/css/select.bootstrap4.min.css" rel="stylesheet" />
+
+    </head>
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper" >
+
+        <!-- Navbar -->
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+            <!-- Left navbar links -->
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#"><i class="fas fa-bars"></i></a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href=@Url.Action("Index", "Home") class="nav-link" style="font-weight: bold">Home</a>
+                </li>
+                <li class="nav-item d-none d-sm-inline-block">
+                    <a href=@Url.Action("About", "Home") class="nav-link" style="font-weight: bold">About</a>
+                </li>
+            </ul>
+
+            <!-- SEARCH FORM -->
+            @*<form class="form-inline ml-3">
+                    <div class="input-group input-group-sm">
+                        <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search">
+                        <div class="input-group-append">
+                            <button class="btn btn-navbar" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>*@
+
+            <!-- Right navbar links -->
+            <ul class="navbar-nav ml-auto">
+                <!-- Notifications Dropdown Menu -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link" data-toggle="dropdown" href="#">
+                        <i class="far fa-bell fa-2x"></i>
+                        @if (user.TicketNotifications.Where(n => n.IsRead == false).Count() > 0)
+                        {
+                        <span class="badge badge-warning navbar-badge">@user.TicketNotifications.Where(n => n.IsRead == false).Count()</span>
+                        }
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                        <span class="dropdown-item dropdown-header">@user.TicketNotifications.Where(n => n.IsRead == false).Count() Notifications</span>
+                        @foreach (var notification in user.TicketNotifications)
+                        {
+                            if (!notification.IsRead)
+                            {
+                                <div class="dropdown-divider"></div>
+                                <a href=@Url.Action("SelectTicketNotification", "Tickets", new { notificationId = notification.Id, ticketId = notification.TicketId }) class="dropdown-item">
+                                    <i class="fas fa-ticket-alt mr-2"></i> 
+                                    <p>
+                                        @notification.NotificationBody
+                                    </p>
+                                </a>
+                            }
+                        }
+                        @*<div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>*@
+                    </div>
+                </li>
+            </ul>
+
+        </nav>
+        <!-- /.navbar -->
+        <!-- Main Sidebar Container -->
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <!-- Brand Logo -->
+            <a href=@Url.Action("Index", "Home") class="brand-link">
+                <img src="/Uploads/B_T_Logo.png" style="width: 64%; padding-left: 15px">
+            </a>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Sidebar user panel (optional) -->
+                <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+                    <div class="image">
+                        <img src=@user.AvatarPath class="img-circle elevation-2" alt="Avatar">
+                    </div>
+                    <div class="info">
+                        <a href=@Url.Action("Index", "Account", new { id = user.Id }) class="d-block">@user.DisplayName</a>
+                    </div>
+                </div>
+
+                <!-- Sidebar Menu -->
+                <nav class="mt-2">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                        <!-- Add icons to the links using the .nav-icon class
+    with font-awesome or any other icon font library -->
+                        <li class="nav-item">
+                            <a href=@Url.Action("Index", "Home") class="nav-link active">
+                                <i class="nav-icon fas fa-th"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fa fa-edit"></i>
+                                <p>
+                                    Projects
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href=@Url.Action("Index", "Projects") class="nav-link">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>View All</p>
+                                    </a>
+                                </li>
+                                @if (userRole == "Admin" || userRole == "Project Manager")
+                                {
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link project-Modal" data-toggle="modal" data-target="#createProjectModal">
+                                            <i class="fa fa-plus-circle nav-icon"></i>
+                                            <p>Create New</p>
+                                        </a>
+                                    </li>
+                                }
+                                @if (userRole == "Admin")
+                                {
+                                    foreach (var project in ProjectHelper.ListAllProjects())
+                                    {
+                                        <li class="nav-item">
+                                            <a href=@Url.Action("Details", "Projects", new { id = project.Id }) class="nav-link">
+                                                <i class="far fa-circle nav-icon"></i>
+                                                <p>@project.Name</p>
+                                            </a>
+                                        </li>
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (var project in ProjectHelper.ListUserProjects(user.Id))
+                                    {
+                                        <li class="nav-item">
+                                            <a href=@Url.Action("Details", "Projects", new { id = project.Id }) class="nav-link">
+                                                <i class="far fa-circle nav-icon"></i>
+                                                <p>@project.Name</p>
+                                            </a>
+                                        </li>
+                                    }
+                                }
+
+
+                            </ul>
+                        </li>
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-ticket-alt"></i>
+                                <p>
+                                    Tickets
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href=@Url.Action("Index", "Tickets") class="nav-link">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>View All</p>
+                                    </a>
+                                </li>
+                                @if (userRole == "Admin")
+                                {
+                                    <li class="nav-item">
+                                        <a href=@Url.Action("Histories", "Tickets") class="nav-link">
+                                            <i class="fas fa-history nav-icon"></i>
+                                            <p>Histories</p>
+                                        </a>
+                                    </li>
+                                }
+
+                                @if (userRole == "Submitter")
+                                {
+                                    <li class="nav-item">
+                                        <a href=@Url.Action("Create", "Tickets") class="nav-link">
+                                            <i class="fa fa-plus-circle nav-icon"></i>
+                                            <p>Create New</p>
+                                        </a>
+                                    </li>
+                                }
+
+                            </ul>
+                        </li>
+                        @if (userRole == "Admin" || userRole == "Project Manager")
+                        {
+                            <li class="nav-item has-treeview">
+                                <a href="#" class="nav-link">
+                                    <i class="nav-icon fa fa-user"></i>
+                                    <p>
+                                        Users
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href=@Url.Action("AllUsers", "Account", new { role = "All" }) class="nav-link">
+                                            <i class="far fa-circle nav-icon"></i>
+                                            <p>View All</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href=@Url.Action("AllUsers", "Account", new { role = "Admin" }) class="nav-link">
+                                            <i class="fa fa-user-tie nav-icon"></i>
+                                            <p>Admins</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href=@Url.Action("AllUsers", "Account", new { role = "Project Manager" }) class="nav-link">
+                                            <i class="fa fa-male nav-icon"></i>
+                                            <p>Managers</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href=@Url.Action("AllUsers", "Account", new { role = "Developer" }) class="nav-link">
+                                            <i class="fa fa-laptop nav-icon"></i>
+                                            <p>Developers</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href=@Url.Action("AllUsers", "Account", new { role = "Submitter" }) class="nav-link">
+                                            <i class="fa fa-check nav-icon"></i>
+                                            <p>Submitters</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false" style="padding-top: 250px">
+                        @if (userRole == "Admin" || userRole == "Project Manager")
+                        {
+                            <li class="nav-item">
+                                <a href="#" data-toggle="modal" data-target="#createProjectModal" class="project-Modal nav-link bg-green">
+                                    <i class="nav-icon fas fa-edit"></i>
+                                    <p>Create Project</p>
+                                </a>
+                            </li>
+                        }
+                        @if (userRole == "Submitter")
+                        {
+                            <li class="nav-item">
+                                <a href=@Url.Action("Create", "Tickets") class="bg-green nav-link">
+                                    <i class="nav-icon fas fa-edit"></i>
+                                    <p>Create Ticket</p>
+                                </a>
+                            </li>
+
+                        }
+                        <li class="nav-item" style="padding-top: 10px">
+                            <a href=@Url.Action("CustomLogOff", "Account") class="nav-link bg-red ">
+                                <i class="nav-icon fas fa-door-open"></i>
+                                <p>Log Off</p>
+                            </a>
+                        </li>
+
+                    </ul>
+
+                </nav>
+
+
+
+                <!-- /.sidebar-menu -->
+            </div>
+            <!-- /.sidebar -->
+        </aside>
+
+        <!-- Content Wrapper. Contains page content RENDER LAYOUT HERE INCLUDE CONTENT WRAPPER -->
+        <div class="content-wrapper">
+            @RenderBody()
+        </div>
+        <!-- /.content-wrapper -->
+        @*<footer class="main-footer">
+            <strong>Copyright &copy; 2014-2019 <a href="http://adminlte.io">AdminLTE.io</a>.</strong>
+            All rights reserved.
+            <div class="float-right d-none d-sm-inline-block">
+                <b>Version</b> 3.0.0-rc.5
+            </div>
+        </footer>*@
+
+        <!-- Control Sidebar -->
+        <aside class="control-sidebar control-sidebar-dark">
+            <!-- Control sidebar content goes here -->
+        </aside>
+        <!-- /.control-sidebar -->
+    </div>
+
+
+
+    <!-- Modal -->
+    <div id="createProjectModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <!-- Modal content-->
+            @using (Html.BeginForm("Create", "Projects", FormMethod.Post, new { id = "createProjectForm"}))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title" style="font-weight: bold" id="createProjectErrorHeader">Create Project</h2>
+                    </div>
+                    <div class="modal-body">
+                        <h4>Title</h4>
+                        @Html.TextBox("ProjectTitle", null, new { @class = "form-control", @id = "projectTitleTextBox", @maxlength = "15"})
+                        <h4 style="padding-top: 3%">Description</h4>
+                        @Html.TextBox("ProjectDescription", null, new { @class = "form-control", @id = "projectDescriptionTextBox", @maxlength = "40"})
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">Cancel</button>
+                        <a onclick="submitProjectForm()" class="btn btn-success" style="color: white">
+                            Save
+                        </a>
+                    </div>
+                </div>
+            }
+
+
+        </div>
+    </div>
+
+    <!-- Modal -->
+    
+
+
+
+    <!-- ./wrapper -->
+    <!-- jQuery -->
+    <script src="~/Scripts/jquery/jquery.min.js"></script>
+    <!-- jQuery UI 1.11.4 -->
+    <script src="~/Scripts/jquery-ui/jquery-ui.min.js"></script>
+
+    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+    <script>$.widget.bridge('uibutton', $.ui.button)</script>
+    <!-- Bootstrap 4 -->
+    <script src="~/Scripts/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- ChartJS -->
+    <script src="~/Scripts/chart.js/Chart.min.js"></script>
+    <!-- Sparkline -->
+    <script src="~/Scripts/sparklines/sparkline.js"></script>
+    <!-- JQVMap -->
+    <script src="~/Scripts/jqvmap/jquery.vmap.min.js"></script>
+    <script src="~/Scripts/jqvmap/maps/jquery.vmap.usa.js"></script>
+    <!-- jQuery Knob Chart -->
+    <script src="~/Scripts/jquery-knob/jquery.knob.min.js"></script>
+    <!-- daterangepicker -->
+    <script src="~/Scripts/moment/moment.min.js"></script>
+    <script src="~/Scripts/daterangepicker/daterangepicker.js"></script>
+    <!-- Tempusdominus Bootstrap 4 -->
+    <script src="~/Scripts/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+    <!-- Summernote -->
+    <script src="~/Scripts/summernote/summernote-bs4.min.js"></script>
+    <!-- overlayScrollbars -->
+    <script src="~/Scripts/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
+
+
+    <script src="~/Scripts/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/Scripts/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+
+    <!-- AdminLTE App -->
+
+
+    <script src="~/Scripts/dist/js/adminlte.js"></script>
+
+    <script src="~/Scripts/lodash.js"></script>
+
+    @RenderSection("scripts", required: false)
+
+    <script>
+        function submitProjectForm() {
+            var titleIsEntered = false;
+            var descriptionIsEntered = false;
+            var title = $("#projectTitleTextBox").val()
+            var description = $("#projectDescriptionTextBox").val()
+
+
+            if (description != "") {
+                descriptionIsEntered = true
+            } else {
+                $("#createProjectErrorHeader").text("Enter a Description")
+            }
+            if (title != "") {
+                titleIsEntered = true
+            } else {
+                $("#createProjectErrorHeader").text("Enter a Title")
+            }
+
+            if (descriptionIsEntered && titleIsEntered) {
+                $("#createProjectErrorHeader").text("Creating project...")
+                $("#createProjectForm").submit()
+            }
+
+
+        }
+    </script>
+
+</body>
+
+

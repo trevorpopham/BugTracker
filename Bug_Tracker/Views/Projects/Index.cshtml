@@ -1,0 +1,85 @@
+﻿@using Bug_Tracker.Models
+@using Microsoft.AspNet.Identity;
+@model IEnumerable<Bug_Tracker.Models.Project>
+
+@{
+    ProjectsHelper ProjectHelper = new ProjectsHelper();
+    UserRoleHelper RoleHelper = new UserRoleHelper();
+}
+
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark" style="font-weight: bold; font-size: 300%">All Projects</h1>
+            </div><!-- /.col -->
+            <div class="col-sm-6">
+            </div><!-- /.col -->
+        </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<section class="content">
+    <div class="container-fluid">
+        <!-- Projects -->
+        <div class="row">
+            @if (RoleHelper.ListUserRoles(User.Identity.GetUserId()).ToList()[0] == "Admin")
+            {
+                foreach (var project in Model)
+                {
+                    <div class="col-lg-3 col-6">
+                        <!-- small box -->
+                        <div class="small-box bg-info" style="min-height: 150px">
+                            <div class="inner">
+                                <h3>@project.Name</h3>
+                                <p>
+                                    <b>@project.Tickets.Where(t => t.TicketStatus.Name.Contains("Assigned")).Count()</b> Active Tickets<br />
+                                    @project.Description
+                                </p>
+                            </div>
+                            <a href=@Url.Action("Details", "Projects", new { id = project.Id}) class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                foreach (var project in ProjectHelper.ListUserProjects(User.Identity.GetUserId()))
+                {
+                    <div class="col-lg-3 col-6">
+                        <!-- small box -->
+                        <div class="small-box bg-info">
+                            <div class="inner">
+                                <h3>@project.Name</h3>
+                                <p>
+                                    <b>@project.Tickets.Where(t => t.TicketStatus.Name.Contains("Assigned")).Count()</b> Active Tickets<br />
+                                    @project.Description
+                                </p>
+                            </div>
+                            <a href=@Url.Action("Details", "Projects", new { id = project.Id}) class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                }
+            }
+
+            @if (RoleHelper.ListUserRoles(User.Identity.GetUserId()).ToList()[0] == "Admin" || RoleHelper.ListUserRoles(User.Identity.GetUserId()).ToList()[0] == "Project Manager")
+            {
+                <div class="col-lg-3 col-6">
+                    <!-- small box -->
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h3>Create New</h3>
+                            <p>
+                                <b>@Model.Count()</b> Projects<br />
+                                Click below to create a new Project.
+                            </p>
+                        </div>
+                        <a href=@Url.Action("Create", "Projects") class="small-box-footer project-Modal" data-toggle="modal" data-target="#createProjectModal">Create New <i class="fas fa-arrow-circle-right"></i></a>
+                    </div>
+                </div>
+            }
+
+            <!-- ./col -->
+        </div>
+    </div>
+</section>
