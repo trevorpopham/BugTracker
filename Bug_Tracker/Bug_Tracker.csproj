@@ -766,6 +766,7 @@
     <Content Include="Scripts\summernote\summernote-lite.js.map" />
     <Content Include="Scripts\summernote\summernote.js.map" />
     <Content Include="Smtp.config" />
+    <None Include="Properties\PublishProfiles\TrevorBugTracker - Web Deploy.pubxml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -9,8 +9,10 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using Bug_Tracker.Models;
-using Bug_Tracker.ViewModels;
-using System.Web.Configuration;
+using Bug_Tracker.Helpers;
+using System.IO;
+using System.Collections.Generic;
+using System.Net.Mail;
 
 namespace Bug_Tracker.Controllers
 {
@@ -20,9 +22,13 @@ namespace Bug_Tracker.Controllers
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
 
+        private ApplicationDbContext db = new ApplicationDbContext();
+
         public AccountController()
         {
         }
+
+
 
         public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
         {
@@ -54,12 +60,134 @@ namespace Bug_Tracker.Controllers
             }
         }
 
+        private UserRoleHelper RoleHelper = new UserRoleHelper();
+        private ProjectsHelper ProjectHelper = new ProjectsHelper();
+        private TicketHelper TicketHelper = new TicketHelper();
+
+        [Authorize]
+        public ActionResult Index(string id)
+        {
+            UserViewModel viewModel = new UserViewModel();
+            var user = db.Users.Find(id);
+            var loggedInUser = db.Users.Find(User.Identity.GetUserId());
+            viewModel.AllProjects = db.Projects.ToList();
+            viewModel.User = user;
+            viewModel.LoggedInUser = loggedInUser;
+            viewModel.UserRole = RoleHelper.ListUserRoles(id).FirstOrDefault();
+            viewModel.LoggedInUserRole = RoleHelper.ListUserRoles(User.Identity.GetUserId()).FirstOrDefault();
+            if (viewModel.UserRole == "Admin")
+            {
+                viewModel.Projects = db.Projects.ToList();
+                viewModel.Tickets = db.Tickets.ToList();
+            }
+            else if (viewModel.UserRole == "Project Manager")
+            {
+                viewModel.Projects = ProjectHelper.ListUserProjects(id);
+                viewModel.Tickets = ProjectHelper.ListUserProjects(id).SelectMany(p => p.Tickets).ToList();
+            }
+            else if (viewModel.UserRole == "Developer")
+            {
+                viewModel.Projects = ProjectHelper.ListUserProjects(id);
+                viewModel.Tickets = db.Tickets.Where(t => t.AssignedToUserId == id).ToList();
+            }
+            else if (viewModel.UserRole == "Submitter")
+            {
+                viewModel.Projects = ProjectHelper.ListUserProjects(id);
+                viewModel.Tickets = db.Tickets.Where(t => t.OwnerUserId == id).ToList();
+            }
+
+            return View(viewModel);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public ActionResult ChangeRole(string id, string role)
+        {
+            RoleHelper.ChangeUserRoleTo(id, role);
+            return RedirectToAction("Index", "Account", new { id = id});
+            
+         }
+
+        [Authorize(Roles = "Admin, Project Manager")]
+        public ActionResult ToggleUserOnProject(string id, int projectId)
+        {
+            ProjectHelper.ToggleUserOnProject(id, projectId);
+            return RedirectToAction("Index", "Account", new { id = id });
+        }
+        [Authorize(Roles = "Admin, Project Manager, Developer, Submitter")]
+        [HttpPost]
+        public ActionResult Edit(string id, string displayName, string firstName, string lastName, string email, HttpPostedFileBase avatar)
+        {
+            var user = UserManager.FindById(id);
+            user.DisplayName = displayName;
+            user.FirstName = firstName;
+            user.LastName = lastName;
+            user.Email = email;
+            if (FileUploadValidator.IsWebFriendlyImage(avatar))
+            {
+                var fileName = $"{DateTime.Now.Ticks}_{Path.GetFileName(avatar.FileName)}";
+                avatar.SaveAs(Path.Combine(Server.MapPath("~/Uploads/"), fileName));
+                user.AvatarPath = "/Uploads/" + fileName;
+            }
+            UserManager.Update(user);
+            db.SaveChanges();
+            return RedirectToAction("Index", "Account", new { id = id});
+        }
+
+        [Authorize(Roles = "Admin, Project Manager")]
+        public ActionResult AllUsers(string role)
+        {
+            var users = new List<ApplicationUser>();
+            AllUsersViewModel viewModel = new AllUsersViewModel();
+            viewModel.User = db.Users.Find(User.Identity.GetUserId());
+            viewModel.Role = role;
+            if (role == "All")
+            {
+                users = db.Users.ToList();
+                viewModel.Users = users;
+                viewModel.Header = "All Users";
+                viewModel.SpecialPropertyHeader = "";
+            }
+            else if(role == "Admin") {
+                users = RoleHelper.UsersInRole(role).ToList();
+                viewModel.Users = users;
+                viewModel.Header = "Admins";
+            }
+            else if (role == "Project Manager")
+            {
+                users = RoleHelper.UsersInRole(role).ToList();
+                viewModel.Users = users;
+                viewModel.Header = "Managers";
+                viewModel.SpecialPropertyHeader = "Projects";
+            }
+            else if (role == "Developer")
+            {
+                users = RoleHelper.UsersInRole(role).ToList();
+                viewModel.Users = users;
+                viewModel.Header = "Developers";
+                viewModel.SpecialPropertyHeader = "Tickets";
+            }
+            else if (role == "Submitter")
+            {
+                users = RoleHelper.UsersInRole(role).ToList();
+                viewModel.Users = users;
+                viewModel.Header = "Submitters";
+                viewModel.SpecialPropertyHeader = "Tickets Created";
+            }
+            return View(viewModel);
+        }
+
+
+
         //
         // GET: /Account/Login
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
         {
             ViewBag.ReturnUrl = returnUrl;
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("CustomLogOff", "Account");
+            }
             return View();
         }
 
@@ -81,36 +209,34 @@ namespace Bug_Tracker.Controllers
             switch (result)
             {
                 case SignInStatus.Success:
-                    //LOCK OUT USERS WHO HAVE NOT CONFIRMED AN EMAIL
-                    return RedirectToAction("Dashboard", "Home");
+                    return RedirectToLocal(returnUrl);
                 case SignInStatus.LockedOut:
                     return View("Lockout");
                 case SignInStatus.RequiresVerification:
                     return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
                 case SignInStatus.Failure:
-                default:
                     ModelState.AddModelError("", "Invalid login attempt.");
                     return View(model);
             }
+
+            return View(model);
         }
 
-        // DEMO USER LOGIN
-        // POST: /Account/Login
-        [HttpPost]
         [AllowAnonymous]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DemoLoginAsync(string emailKey)
+        public async Task<ActionResult> DemoAdminLoginAsync(string email, string password, string returnUrl)
         {
-            var email = WebConfigurationManager.AppSettings[emailKey];
-            var password = WebConfigurationManager.AppSettings["DemoPassword"];
-
             var result = await SignInManager.PasswordSignInAsync(email, password, false, shouldLockout: false);
             switch (result)
             {
                 case SignInStatus.Success:
-                    return RedirectToAction("Dashboard", "Home");
+                    return RedirectToAction("Index", "Home");
+                case SignInStatus.LockedOut:
+                    return View("Lockout");
+                case SignInStatus.RequiresVerification:
+                    return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = false });
                 case SignInStatus.Failure:
                 default:
+                    ModelState.AddModelError("", "Invalid login attempt.");
                     return RedirectToAction("Login", "Account");
             }
         }
@@ -166,56 +292,73 @@ namespace Bug_Tracker.Controllers
             return View();
         }
 
+        [AllowAnonymous]
+        public ActionResult Demo()
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("CustomLogOff", "Account");
+            }
+            return View();
+        }
+
         //
         // POST: /Account/Register
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Register(RegisterViewModel model)
+        public async Task<ActionResult> Register(RegisterViewModel model, HttpPostedFileBase avatar)
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { 
-                    UserName = model.Email, 
-                    Email = model.Email, 
-                    FirstName = model.FirstName, 
+                if (db.Users.Any(u => u.Email == model.Email))
+                {
+                    ModelState.AddModelError("Email", "Email already used.");
+                    return View(model);
+                }
+
+                var user = new ApplicationUser {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FirstName = model.FirstName,
                     LastName = model.LastName,
-                    AvatarPath = "Content/Images/blank-avatar.png"
+                    DisplayName = model.DisplayName,
+                    IsDemoUser = false
                 };
+                
+                if (FileUploadValidator.IsWebFriendlyImage(avatar))
+                {
+                    var fileName = Path.GetFileName(avatar.FileName);
+                    avatar.SaveAs(Path.Combine(Server.MapPath("~/Uploads/"), fileName));
+                    user.AvatarPath = "/Uploads/" + fileName;
+                }
+                if (avatar == null)
+                {
+                    user.AvatarPath = "/Uploads/default-user.jpg";
+                }
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
                     await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-
+                    RoleHelper.ChangeUserRoleTo(user.Id, "New User");
+                    // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
+                    // Send an email with this link
                     string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
                     var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    //await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                    await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
 
-                    try
-                    {
-                        var mail = new EmailModel()
-                        {
-                            FromName = "Bug Tracker",
-                            FromEmail = WebConfigurationManager.AppSettings["OutlookFrom"],
-                            ToEmail = user.Email,
-                            Subject = "Thanks for registering!",
-                            Body = $"Please confirm your email by clicking <a href=\"{callbackUrl}\">here</a>."
-                        };
-                        await mail.Launch();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                        await Task.FromResult(0);
-                    }
-
-                    return RedirectToAction("Login", "Account");
+                    return RedirectToAction("New User", "Account");
                 }
                 AddErrors(result);
             }
 
             // If we got this far, something failed, redisplay form
             return View(model);
+        }
+        [Authorize]
+        public ActionResult NewUser()
+        {
+            return View();
         }
 
         //
@@ -249,7 +392,7 @@ namespace Bug_Tracker.Controllers
             if (ModelState.IsValid)
             {
                 var user = await UserManager.FindByNameAsync(model.Email);
-                if (user == null || !(await UserManager.IsEmailConfirmedAsync(user.Id)))
+                if (user == null)
                 {
                     // Don't reveal that the user does not exist or is not confirmed
                     return View("ForgotPasswordConfirmation");
@@ -258,26 +401,17 @@ namespace Bug_Tracker.Controllers
                 // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
                 // Send an email with this link
                 string code = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
-                var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-
-                try
+                var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code, email = user.Email }, protocol: Request.Url.Scheme);		
+                //await UserManager.SendEmailAsync(user.Id, "Reset Password", "Please reset your password by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                var message = new MailMessage
                 {
-                    var mail = new EmailModel()
-                    {
-                        FromName = "Kill Bug",
-                        FromEmail = WebConfigurationManager.AppSettings["OutlookFrom"],
-                        ToEmail = user.Email,
-                        Subject = "Password Reset!",
-                        Body = $"Please reset your password by clicking <a href=\"{callbackUrl}\">here</a>."
-                    };
-                    await mail.Launch();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    await Task.FromResult(0);
-                }
-
+                    Subject = "Reset Password",
+                    Body = "Please reset your password by clicking <a href=\"" + callbackUrl + "\">here</a>",
+                    From = new MailAddress("trevorpopham@gmail.com"),
+                    IsBodyHtml = true
+            };
+                message.To.Add(new MailAddress(user.Email));
+                SendEmail.Send(message);
                 return RedirectToAction("ForgotPasswordConfirmation", "Account");
             }
 
@@ -293,50 +427,12 @@ namespace Bug_Tracker.Controllers
             return View();
         }
 
-        [HttpGet]
-        [AllowAnonymous]
-        public ActionResult ResendEmailConfirmation()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [AllowAnonymous]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> ResendEmailConfirmation(ForgotPasswordViewModel model)
-        {
-            var user = await UserManager.FindByNameAsync(model.Email);
-
-            if (user != null)
-            {
-                string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-
-                try
-                {
-                    var mail = new EmailModel()
-                    {
-                        FromName = "Kill Bug",
-                        FromEmail = WebConfigurationManager.AppSettings["OutlookFrom"],
-                        ToEmail = user.Email,
-                        Subject = "Please confirm your email!",
-                        Body = $"Please confirm your email by clicking <a href=\"{callbackUrl}\">here</a>."
-                    };
-                    await mail.Launch();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    await Task.FromResult(0);
-                }
-            }
-            return RedirectToAction("ConfirmationSent");
-        }
         //
         // GET: /Account/ResetPassword
         [AllowAnonymous]
-        public ActionResult ResetPassword(string code)
+        public ActionResult ResetPassword(string code, string email)
         {
+            ViewBag.UserEmailOnPasswordReset = email;
             return code == null ? View("Error") : View();
         }
 
@@ -363,6 +459,34 @@ namespace Bug_Tracker.Controllers
                 return RedirectToAction("ResetPasswordConfirmation", "Account");
             }
             AddErrors(result);
+            return View();
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public ActionResult ResendEmailConfirmation()
+        {
+            return View();
+        }
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> ResendEmailConfirmation(ForgotPasswordViewModel model)
+        {
+            var user = await UserManager.FindByNameAsync(model.Email);
+            if (user != null)
+            {
+                string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
+                var callbackUrl = Url.Action("ConfirmEmail", "Account",
+                new { userId = user.Id, code = code }, protocol:
+                Request.Url.Scheme);
+                await UserManager.SendEmailAsync(user.Id, "Confirm your account",
+                "Please confirm your account by clicking <ahref =\"" + callbackUrl + "\">here</a>");
+            }
+            return RedirectToAction("ConfirmationSent");
+        }
+        public ActionResult ConfimationSent()
+        {
             return View();
         }
 
@@ -470,15 +594,7 @@ namespace Bug_Tracker.Controllers
                 {
                     return View("ExternalLoginFailure");
                 }
-                //var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-                var user = new ApplicationUser
-                {
-                    UserName = model.Email,
-                    Email = model.Email,
-                    FirstName = model.FirstName,
-                    LastName = model.LastName,
-                    AvatarPath = "Content/Images/blank-avatar.png"
-                };
+                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
                 var result = await UserManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
@@ -501,6 +617,12 @@ namespace Bug_Tracker.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult LogOff()
+        {
+            AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+            return RedirectToAction("Index", "Home");
+        }
+
+        public ActionResult CustomLogOff()
         {
             AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
             return RedirectToAction("Login", "Account");

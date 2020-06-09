@@ -107,7 +107,7 @@ namespace Bug_Tracker.Controllers
             
          }
 
-        [Authorize(Roles = "Admin, Manager")]
+        [Authorize(Roles = "Admin, Project Manager")]
         public ActionResult ToggleUserOnProject(string id, int projectId)
         {
             ProjectHelper.ToggleUserOnProject(id, projectId);
@@ -133,7 +133,7 @@ namespace Bug_Tracker.Controllers
             return RedirectToAction("Index", "Account", new { id = id});
         }
 
-        [Authorize(Roles = "Admin, Manager")]
+        [Authorize(Roles = "Admin, Project Manager")]
         public ActionResult AllUsers(string role)
         {
             var users = new List<ApplicationUser>();
